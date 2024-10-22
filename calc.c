@@ -1,5 +1,5 @@
 #define DEFAULT_CAP 4
-#define MAX_DIGIT 999999999
+#define BASE 1000000000
 
 #include "bignum.h"
 #include<stdlib.h>
@@ -22,10 +22,10 @@ BigNum_t* add(BigNum_t* a, BigNum_t* b){
 		else
 			single = carry + a->digits[i] + b->digits[i];
 
-		if(single > MAX_DIGIT){
-			result->digits[i] = (int)(single - (MAX_DIGIT+1));
+		if(single > (BASE-1)){
+			result->digits[i] = (int)(single - BASE);
 			
-			carry = 1;
+			carry = BASE;
 		}
 		else{
 			result->digits[i] = (int)single;
@@ -65,9 +65,9 @@ BigNum_t* multiply(BigNum_t* a, BigNum_t* b){
 			else
 				single = (long long)(b->digits[i]) * a->digits[j]+carry;
 			
-			if(single > MAX_DIGIT){
-				current->digits[j] = (int)(single % 1000000000);
-				carry = (int)(single / 1000000000);
+			if(single > (BASE-1)){
+				current->digits[j] = (int)(single % BASE);
+				carry = (int)(single / BASE);
 			}
 			else{
 				current->digits[j] = (int)single;
@@ -95,4 +95,7 @@ BigNum_t* multiply(BigNum_t* a, BigNum_t* b){
 	return result;
 }
 			
+BigNum_t* exponentiate(BigNum_t* base, BigNum_t* exponent){
+	BigNum_t* result = init_BigNum(DEFAULT_CAP);
 
+	int

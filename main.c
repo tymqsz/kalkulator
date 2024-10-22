@@ -12,6 +12,9 @@ int main(int argc, char** argv){
 	BigNum_t* b;
 	load_args_from_file(&a, &b, "input.txt");
 	
+
+	//print_BigNum(a);
+	//print_BigNum(b);
 	BigNum_t* c = multiply(a, b);
 	
 	print_BigNum(c);
