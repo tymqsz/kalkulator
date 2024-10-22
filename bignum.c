@@ -14,6 +14,11 @@ BigNum_t* init_BigNum(int capacity){
 	return num;
 }
 
+void destroy_BigNum(BigNum_t* num){
+	free(num->digits);
+	free(num);
+}
+
 void expand_BigNum(BigNum_t* num, int capacity){
 	num->capacity = capacity;
 	
@@ -37,6 +42,19 @@ void shift_left(BigNum_t* num){
 void add_leading_zeros(BigNum_t* num, int target_size){
 	while(num->size < target_size)
 		num->digits[num->size++] = 0;
+}
+
+BigNum_t* copy_BigNum(BigNum_t* num){
+	BigNum_t* copy = init_BigNum(num->capacity);
+	copy->size = num->size;
+
+	int i = 0;
+	while(i < num->size){
+		copy->digits[i] = num->digits[i];
+		i++;
+	}
+	
+	return copy;
 }
 
 BigNum_t* string_to_BigNum(char* string){

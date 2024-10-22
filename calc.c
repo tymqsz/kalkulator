@@ -84,18 +84,43 @@ BigNum_t* multiply(BigNum_t* a, BigNum_t* b){
 			shift_left(current);
 
 		temp = add(result, current);
-		free(result);
+		destroy_BigNum(result);
 		result = temp;
-		free(current);
+		destroy_BigNum(current);
 
 		i++;
 	}
 
 
+	destroy_BigNum(temp);
+	destroy_BigNum(current);
+
 	return result;
 }
 			
 BigNum_t* exponentiate(BigNum_t* base, BigNum_t* exponent){
-	BigNum_t* result = init_BigNum(DEFAULT_CAP);
+	BigNum_t* result = copy_BigNum(base);
+	/* TODO: zero/ one bignums, compare
+	if(base->size == 1 && base->digit[0] == 0)
+		return one_BigNum();
+	*/
 
-	int
+	BigNum_t* temp;
+	print_BigNum(result);
+	printf("\n\n\n");
+
+	int i = 0;
+	while(i < exponent->digits[0]-1){ // TODO fix
+		//temp = multiply(result, base);
+		//destroy_BigNum(result);
+		//result = copy_BigNum(temp);
+		//destroy_BigNum(temp);
+
+		i++;
+	}
+	
+	//destroy_BigNum(temp);
+
+	return result;
+}
+

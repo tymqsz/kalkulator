@@ -15,7 +15,7 @@ int main(int argc, char** argv){
 
 	//print_BigNum(a);
 	//print_BigNum(b);
-	BigNum_t* c = multiply(a, b);
+	BigNum_t* c = exponentiate(a, b);
 	
 	print_BigNum(c);
 
