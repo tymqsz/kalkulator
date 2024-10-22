@@ -13,8 +13,6 @@ int main(int argc, char** argv){
 	load_args_from_file(&a, &b, "input.txt");
 	
 
-	//print_BigNum(a);
-	//print_BigNum(b);
 	BigNum_t* c = exponentiate(a, b);
 	
 	print_BigNum(c);

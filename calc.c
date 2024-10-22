@@ -25,7 +25,7 @@ BigNum_t* add(BigNum_t* a, BigNum_t* b){
 		if(single > (BASE-1)){
 			result->digits[i] = (int)(single - BASE);
 			
-			carry = BASE;
+			carry = 1;
 		}
 		else{
 			result->digits[i] = (int)single;
@@ -82,18 +82,17 @@ BigNum_t* multiply(BigNum_t* a, BigNum_t* b){
 		
 		for(int shift_cnt = 0; shift_cnt < i; shift_cnt++)
 			shift_left(current);
-
+		
 		temp = add(result, current);
+		
 		destroy_BigNum(result);
-		result = temp;
+		result = copy_BigNum(temp);
+		
 		destroy_BigNum(current);
-
+		destroy_BigNum(temp);
+		
 		i++;
 	}
-
-
-	destroy_BigNum(temp);
-	destroy_BigNum(current);
 
 	return result;
 }
@@ -104,23 +103,18 @@ BigNum_t* exponentiate(BigNum_t* base, BigNum_t* exponent){
 	if(base->size == 1 && base->digit[0] == 0)
 		return one_BigNum();
 	*/
-
 	BigNum_t* temp;
-	print_BigNum(result);
-	printf("\n\n\n");
-
+	
 	int i = 0;
 	while(i < exponent->digits[0]-1){ // TODO fix
-		//temp = multiply(result, base);
-		//destroy_BigNum(result);
-		//result = copy_BigNum(temp);
-		//destroy_BigNum(temp);
-
+		temp = multiply(result, base);
+		destroy_BigNum(result);
+		result = copy_BigNum(temp);
+		destroy_BigNum(temp);
+		
 		i++;
 	}
 	
-	//destroy_BigNum(temp);
-
 	return result;
 }
 

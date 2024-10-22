@@ -9,7 +9,7 @@ BigNum_t* init_BigNum(int capacity){
 	
 	num->size = 0;
 	num->capacity = capacity;
-	num->digits = malloc(sizeof(int)*capacity);
+	num->digits = calloc(capacity, sizeof(int));
 	
 	return num;
 }
@@ -23,6 +23,9 @@ void expand_BigNum(BigNum_t* num, int capacity){
 	num->capacity = capacity;
 	
 	num->digits = realloc(num->digits, sizeof(int)*capacity);
+
+	for(int i = num->size; i < num->capacity; i++)
+		num->digits[i] = 0;
 }
 
 void shift_left(BigNum_t* num){
@@ -40,8 +43,12 @@ void shift_left(BigNum_t* num){
 }
 
 void add_leading_zeros(BigNum_t* num, int target_size){
-	while(num->size < target_size)
+	while(num->size < target_size){
+		if(num->size+1 >= num->capacity)
+			expand_BigNum(num, num->capacity*2);
+		
 		num->digits[num->size++] = 0;
+	}
 }
 
 BigNum_t* copy_BigNum(BigNum_t* num){
@@ -95,18 +102,3 @@ void print_BigNum(BigNum_t* num){
 
 	printf("\n");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-
