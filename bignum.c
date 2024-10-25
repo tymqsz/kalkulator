@@ -51,6 +51,54 @@ void add_leading_zeros(BigNum_t* num, int target_size){
 	}
 }
 
+int compare(BigNum_t* a, BigNum_t* b){
+	// -1 : a < b
+	//  1 : a > b
+	//  0 : a = b
+
+	if(a->size > b->size)
+		return 1;
+	if(a->size < b->size)
+		return -1;
+	
+	int i = 0;
+	while(i < a->size){
+		if(a->digits[i] > b->digits[i])
+			return 1;
+		if(a->digits[i] < b->digits[i])
+			return -1;
+
+		i++;
+	}
+
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 BigNum_t* copy_BigNum(BigNum_t* num){
 	BigNum_t* copy = init_BigNum(num->capacity);
 	copy->size = num->size;
@@ -64,33 +112,43 @@ BigNum_t* copy_BigNum(BigNum_t* num){
 	return copy;
 }
 
-BigNum_t* string_to_BigNum(char* string){
-	BigNum_t* num = init_BigNum(3);	
-
-	int len = strlen(string);
-	int start, size;
-	char* digit;
-	int i = len;
-
-	while(i > 0){
-		start = (i-9) >= 0 ? (i-9) : 0;
-		size = (i-9) >= 0 ? 9 : i;
-		
-		digit = malloc(size);
-		strncpy(digit, string+start, size);
-		
-		if(num->size >= num->capacity)
-			expand_BigNum(num, num->capacity*2);
-
-		num->digits[num->size++] = atoi(digit);
-
-		free(digit);
-		i -= 9;
-	}
+BigNum_t* int_to_BigNum(int n){
+	BigNum_t* num = init_BigNum(1);
+	num->digits[num->size++] = n;
 
 	return num;
 }
 
+BigNum_t* string_to_BigNum(char* string) {
+    BigNum_t* num = init_BigNum(4); 
+    
+    int len = strlen(string);
+    int start, size;
+    char* digit;
+    int i = len;
+
+    while (i > 0) {
+        start = (i - 9) >= 0 ? (i - 9) : 0;
+        size = i - start;
+
+        digit = malloc(size + 1);
+
+        strncpy(digit, string + start, size);
+        digit[size] = '\0';
+
+        if (num->size + 1 >= num->capacity) {
+            expand_BigNum(num, num->capacity + 2);
+        }
+
+        num->digits[num->size++] = atoi(digit);
+
+        free(digit);
+
+        i -= 9;
+    }
+
+    return num;
+}
 
 void print_BigNum(BigNum_t* num){
 	int i = num->size-1;

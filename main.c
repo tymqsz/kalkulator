@@ -10,12 +10,17 @@
 int main(int argc, char** argv){
 	BigNum_t* a;
 	BigNum_t* b;
+	BigNum_t* c;
+	
 	load_args_from_file(&a, &b, "input.txt");
 	
-
-	BigNum_t* c = exponentiate(a, b);
+	c = divide(a, b);
 	
 	print_BigNum(c);
+	
+	destroy_BigNum(a);
+	destroy_BigNum(b);
+	destroy_BigNum(c);
 
 	return 0;
 }

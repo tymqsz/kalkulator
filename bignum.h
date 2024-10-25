@@ -19,10 +19,12 @@ void shift_left(BigNum_t*);
 
 BigNum_t* string_to_BigNum(char*);
 
+BigNum_t* int_to_BigNum(int);
+
 void print_BigNum(BigNum_t*);
 
 void add_leading_zeros(BigNum_t*, int);
 
-
+int compare(BigNum_t*, BigNum_t*);
 
 #endif
