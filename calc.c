@@ -6,250 +6,265 @@
 #include<stdio.h>
 
 
-BigNum_t* add(BigNum_t* a, BigNum_t* b){
-	BigNum_t* a_copy = copy_BigNum(a);
-	BigNum_t* b_copy = copy_BigNum(b);
-
-	int carry = 0;
+void add(BigNum_t** a, BigNum_t* b){
+	BigNum_t* A = *a;
+	BigNum_t* B = copy_BigNum(b);
 	BigNum_t* result = init_BigNum(DEFAULT_CAPACITY);
 	
-
-	int max_ab_size = a->size > b->size ? a->size : b->size;
-	add_leading_zeros(a_copy, max_ab_size);
-	add_leading_zeros(b_copy, max_ab_size);
+	/* normalize numbers length */
+	int max_ab_size = (*a)->size > b->size ? (*a)->size : b->size;
+	add_leading_zeros(A, max_ab_size);
+	add_leading_zeros(B, max_ab_size);
 	
-	long long single;
-	int i = 0;
-	while(carry > 0 || i < max_ab_size){
-		if(i >= a_copy->size)
-			single = carry;
-		else
-			single = carry + a_copy->digits[i] + b_copy->digits[i];
 
-		if(single > (BASE-1)){
-			result->digits[i] = (int)(single - BASE);
+	long long digit;
+	int carry = 0, i = 0;
+	while(carry > 0 || i < max_ab_size){	
+		if(i >= A->size) /* handle last carry */
+			digit = carry;
+		else
+			digit = carry + A->digits[i] + B->digits[i];
+
+		/* handle digit overflow */
+		if(digit > (BASE-1)){
+			result->digits[i] = (int)(digit - BASE);
 			
 			carry = 1;
 		}
 		else{
-			result->digits[i] = (int)single;
+			result->digits[i] = (int)digit;
 			
 			carry = 0;
 		}
-
-		result->size++;
-		if(result->size >= result->capacity)
+		
+		/* update result size, 
+		   if necessary allocate more memory */
+		if(++result->size >= result->capacity)
 			expand_BigNum(result, result->capacity+1);
 
 		
 		i++;
 	}
 
-	destroy_BigNum(a_copy);
-	destroy_BigNum(b_copy);
-
+	destroy_BigNum(A);
+	destroy_BigNum(B);
 	
-	return result;
+	*a = result;
 }
 
-BigNum_t* multiply(BigNum_t* a, BigNum_t* b){
-	BigNum_t* a_copy = copy_BigNum(a);
-	BigNum_t* b_copy = copy_BigNum(b);
+void multiply(BigNum_t** a, BigNum_t* b){
+	BigNum_t* A = (*a);
+	BigNum_t* B = copy_BigNum(b);
 	
 	BigNum_t* result = int_to_BigNum(0);
-	BigNum_t* current;
-	BigNum_t* temp;
+	BigNum_t* part;
 	
-	long long single;
+	/* long multiplication by adding up partial results (part) */
+	long long digit;
 	int i = 0, j, carry;
-	while(i < b_copy->size){
+	while(i < B->size){
 		j = 0;
 		carry = 0;
-		current = init_BigNum(a_copy->size+b_copy->size);
+		part = init_BigNum(A->size+B->size);
 		
-		while(j < a_copy->size || carry > 0){
-			if(j >= a_copy->size)
-				single = carry;
+		while(j < A->size || carry > 0){
+			if(j >= A->size) /* handle last carry */
+				digit = carry;
 			else
-				single = (long long)(b_copy->digits[i]) * a_copy->digits[j]+carry;
+				digit = (long long)(B->digits[i]) * A->digits[j]+carry;
 			
-			if(single > (BASE-1)){
-				current->digits[j] = (int)(single % BASE);
-				carry = (int)(single / BASE);
+			/* handle digit overflow */
+			if(digit > (BASE-1)){
+				part->digits[j] = (int)(digit % BASE);
+				carry = (int)(digit / BASE);
 			}
 			else{
-				current->digits[j] = (int)single;
+				part->digits[j] = (int)digit;
 				carry = 0;
 			}
-
-			if(++current->size >= current->capacity)
-				expand_BigNum(current, current->capacity+2);
+			
+			/* update part size and if necessary allocate more memory */
+			if(++part->size >= part->capacity)
+				expand_BigNum(part, part->capacity+1);
 		
 			j++;
 		}
 		
+		/* shift part i-times to the left
+		   (equivalent of multiplying by BASE i-times */
 		for(int shift_cnt = 0; shift_cnt < i; shift_cnt++)
-			shift_left(current);
+			shift_left(part);
 		
-		temp = add(result, current);
-		
-		destroy_BigNum(result);
-		result = copy_BigNum(temp);
-		
-		destroy_BigNum(current);
-		destroy_BigNum(temp);
+		add(&result, part);	
+		destroy_BigNum(part);
 		
 		i++;
 	}
 	
-	destroy_BigNum(a_copy);
-	destroy_BigNum(b_copy);
+	destroy_BigNum(A);
+	destroy_BigNum(B);
 
-	return result;
+	*a = result;
 }
 
-int divide_by_digit(int a1, int a2, int b){
-	long long a = (long long)a1*BASE + a2;
-	long long div = a / b;	
-	return (int)div;
-}
-
-
-BigNum_t* subtract(BigNum_t* a, BigNum_t* b){
-	BigNum_t* a_copy = copy_BigNum(a);
-	BigNum_t* b_copy = copy_BigNum(b);
+void subtract(BigNum_t** a, BigNum_t* b){
+	BigNum_t* A = *a;
+	BigNum_t* B = copy_BigNum(b);
 	
-	BigNum_t* result = init_BigNum(a->size);
-	add_leading_zeros(b_copy, a->size);
+	/* check validity of args */
+	if(compare(A, B) == -1){
+		printf("unable to subtract\n");
+		exit(1);
+	}
+	
+	/* normalize number lengths */
+	BigNum_t* result = init_BigNum(A->size);
+	add_leading_zeros(B, A->size);
 
 	int i = 0;
-	long long a_part;
-	while(i < a_copy->size){
-		a_part = a_copy->digits[i];
-		if(b_copy->digits[i] > a_copy->digits[i]){
+	long long digit;
+	while(i < A->size){
+		digit = A->digits[i];
+		
+		/* borrow from higher rank digit */
+		if(B->digits[i] > A->digits[i]){
 			// borrow
-			a_part += BASE; 
-			a_copy->digits[i+1] -= 1;
+			digit += BASE; 
+			A->digits[i+1] -= 1;
 		}
-
-		result->digits[result->size++] = (int)a_part - b_copy->digits[i];
+		
+		/* update result */
+		result->digits[result->size] = (int)digit - B->digits[i];
+		result->size++;
 
 		i += 1;
 	}
 	
-	destroy_BigNum(a_copy);
-	destroy_BigNum(b_copy);
-	return result;
+	destroy_BigNum(A);
+	destroy_BigNum(B);
+
+	*a = result;
 }
 
-BigNum_t* single_divide(BigNum_t* a, int b){
-	BigNum_t* a_copy = copy_BigNum(a);
+void divide_by_digit(BigNum_t** a, int b){
+	BigNum_t* A = *a;
 	
-	BigNum_t* result = init_BigNum(a->size);
-	result->size = a->size;
-	BigNum_t* big_b = int_to_BigNum(b);
-	BigNum_t* partial;
-	BigNum_t* b_shifted;
-	BigNum_t* temp;
+	BigNum_t* result = init_BigNum(A->size);
+	result->size = A->size;
+	
+	int digit1, digit2, prev_digit, quotient;
+	long long chunk, estimate, remainder;
+	
+	add_leading_zeros(A, A->size+1);
+	int i = A->size-1;
+	digit1 = A->digits[i];
+	digit2 = A->digits[i-1];
 
-	int estimate, shift_cnt, j;
-	add_leading_zeros(a_copy, a->size+1);
-	int i = a_copy->size-1;
+	/* long division
+	   (handling two-digit by one-digit number division chunks) */
 	while(i > 0){
-		estimate = divide_by_digit(a_copy->digits[i], a_copy->digits[i-1], b);
 		
-		b_shifted = copy_BigNum(big_b);
-		temp = int_to_BigNum(estimate);
-
-		partial = multiply(big_b, temp);
-		shift_cnt = i-1;
-		j = 0;
-		while(j < shift_cnt){
-			shift_left(partial);
-			shift_left(b_shifted);
-
-			j++;
-		}
+		/* calculate current digit */
+		chunk = (long long)digit1 * BASE + digit2;
+		quotient = (int) (chunk / b) ;	
 		
-		destroy_BigNum(temp);
-		temp = subtract(a_copy, partial);
-		
-		destroy_BigNum(a_copy);
-		a_copy = copy_BigNum(temp);
-		destroy_BigNum(temp);
-		destroy_BigNum(partial);
-		destroy_BigNum(b_shifted);
+		estimate = (long long)quotient * b;
+		remainder = chunk - estimate;
+		prev_digit = (int)(remainder % BASE);
 
-		result->digits[i-1] = estimate;
+		result->digits[i-1] = quotient;
+		
+		digit1 = prev_digit;
+		digit2 = A->digits[i-2];
 		
 		i--;
 	}
 	
-	destroy_BigNum(a_copy);
-	destroy_BigNum(big_b);
+	destroy_BigNum(A);
 	
-	return result;
+	*a = result;
 }
 
+void divide(BigNum_t** a, BigNum_t* b) {
+    BigNum_t* A = *a;
 
-BigNum_t* divide(BigNum_t* a, BigNum_t* b) {
-    if (a->size == 1 && b->size == 1)
-        return int_to_BigNum(a->digits[0] / b->digits[0]);
-    if (a->size < b->size)
-        return int_to_BigNum(0);
-    if (b->size == 1)
-        return single_divide(a, b->digits[0]);
+	/*
+	if (A->size == 1 && b->size == 1)
+        *a = int_to_BigNum(A->digits[0] / b->digits[0]);
+    if (A->size < b->size)
+        *a = int_to_BigNum(0);
+	*/
+
+    if (b->size == 1){
+        divide_by_digit(&A, b->digits[0]);	
+		*a = A;
+		return;
+	}
+
+	/* upscale b */
+	int msb = b->digits[b->size-1];
+	int comp = 1000000000;
+	int scale = 1;
+	while(comp > msb){
+		comp /= 10;
+		scale *= 10;
 	
+	}
+	scale /= 10;
+	if(scale == 1000000000)
+		scale /= 10;
+	multiply(&b, int_to_BigNum(scale));
+	multiply(&A, int_to_BigNum(scale));
+
 	BigNum_t* temp;
 	BigNum_t* one = int_to_BigNum(1);
-    BigNum_t* result = init_BigNum(a->size);
+    BigNum_t* result = init_BigNum(A->size);
     BigNum_t* quotient;
 	int q; // ???
 	BigNum_t* estimate;
 	BigNum_t* h; //???
 
-	add_leading_zeros(a, a->size + 1);
-	BigNum_t* part = copy_BigNum(a);
+	add_leading_zeros(A, A->size + 1);
+	BigNum_t* part = copy_BigNum(A);
 	int i = 0;
-	while(i < (a->size-b->size-1)){
+	while(i < (A->size-b->size-1)){
 		shift_right(part);
 		i++;
 	}
 	
 
-	i = a->size-1-b->size;
+	i = A->size-1-b->size;
 	result->size = i+1;
 	while(i >= 0){
-		quotient = single_divide(part, b->digits[b->size-1]);
-		q = quotient->digits[b->size-1];
+		quotient = copy_BigNum(part);
+		divide_by_digit(&quotient, b->digits[b->size-1]);
 		
-		h = int_to_BigNum(q);
-		estimate = multiply(b, h);
-		destroy_BigNum(h);
-
-		while(compare(estimate, part)==1){
-			q--;
-			
-			temp = subtract(estimate, b);
-			destroy_BigNum(estimate);
-			estimate = copy_BigNum(temp);
-			destroy_BigNum(temp);
-		
+		int j = 0;
+		while(j < b->size-1){
+			shift_right(quotient);
+			j++;
 		}
 
-		temp = subtract(part, estimate);
-		destroy_BigNum(part);
-		part = copy_BigNum(temp);
-		destroy_BigNum(temp);
+		
+		estimate = copy_BigNum(b);
+		multiply(&estimate, quotient);
+
+		while(compare(estimate, part)==1){
+			subtract(&quotient, int_to_BigNum(1));
+			
+			subtract(&estimate, b);
+		}
+
+		subtract(&part, estimate);		
 		
 		// update part
 		shift_left(part);
 		part->size--;
 		
 		if(i > 0)
-			part->digits[0] = a->digits[i-1];
+			part->digits[0] = A->digits[i-1];
 
-		result->digits[i] = q; 
+		result->digits[i] = quotient->digits[0]; 
 		
 
 		destroy_BigNum(quotient);
@@ -261,7 +276,7 @@ BigNum_t* divide(BigNum_t* a, BigNum_t* b) {
 	destroy_BigNum(part);
 	destroy_BigNum(one);
 
-	return result;
+	*a = result;
 }
 
 BigNum_t* fast_exp(BigNum_t* base, BigNum_t* exponent){
@@ -275,27 +290,18 @@ BigNum_t* fast_exp(BigNum_t* base, BigNum_t* exponent){
 
 	while(n > 1){
 		if(n % 2 == 1){
-			temp = multiply(x, y);
-			destroy_BigNum(y);
-			y = copy_BigNum(temp);
-			destroy_BigNum(temp);
-
+			multiply(&y, x);
 			n -= 1;
 		}
 
-		temp = multiply(x, x);
-		destroy_BigNum(x);
-		x = copy_BigNum(temp); 
-		destroy_BigNum(temp);
+		multiply(&x, x);
 
 		n /= 2;
 	}
 
-	BigNum_t* result = multiply(x, y);
-	destroy_BigNum(y);
-	destroy_BigNum(x);
+	multiply(&x, y);
 
-	return result;
+	return x;
 }
 
 BigNum_t* exponentiate(BigNum_t* base, BigNum_t* exponent){
