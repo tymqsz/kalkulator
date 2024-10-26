@@ -42,6 +42,24 @@ void shift_left(BigNum_t* num){
 	num->digits[0] = 0;
 }
 
+void remove_leading_zeros(BigNum_t* num){
+	while(num->size > 0 && num->digits[num->size-1] == 0){
+		num->size--;
+	}
+}
+
+void shift_right(BigNum_t* num){
+	num->size--;
+	
+	int i = 0;
+	while(i < num->size){
+		num->digits[i] = num->digits[i+1];
+		i++;
+	}
+
+	num->digits[num->size] = 0;
+}
+
 void add_leading_zeros(BigNum_t* num, int target_size){
 	while(num->size < target_size){
 		if(num->size+1 >= num->capacity)
@@ -52,25 +70,43 @@ void add_leading_zeros(BigNum_t* num, int target_size){
 }
 
 int compare(BigNum_t* a, BigNum_t* b){
+	BigNum_t* a_copy = copy_BigNum(a);
+	BigNum_t* b_copy = copy_BigNum(b);
+
+	remove_leading_zeros(a_copy);
+	remove_leading_zeros(b_copy);
+
 	// -1 : a < b
 	//  1 : a > b
 	//  0 : a = b
-
-	if(a->size > b->size)
+	if(a_copy->size > b_copy->size){
+		destroy_BigNum(a_copy);
+		destroy_BigNum(b_copy);
 		return 1;
-	if(a->size < b->size)
+	}
+	if(a_copy->size < b_copy->size){
+		destroy_BigNum(a_copy);
+		destroy_BigNum(b_copy);
 		return -1;
-	
-	int i = 0;
-	while(i < a->size){
-		if(a->digits[i] > b->digits[i])
-			return 1;
-		if(a->digits[i] < b->digits[i])
-			return -1;
-
-		i++;
 	}
 
+	int i = a_copy->size-1;
+	while(i >= 0){
+		if(a_copy->digits[i] > b_copy->digits[i]){
+			destroy_BigNum(a_copy);
+			destroy_BigNum(b_copy);
+			return 1;
+		}
+		if(a_copy->digits[i] < b_copy->digits[i]){
+			destroy_BigNum(a_copy);
+			destroy_BigNum(b_copy);
+			return -1;
+		}
+
+		i--;
+	}
+	destroy_BigNum(a_copy);
+	destroy_BigNum(b_copy);
 	return 0;
 }
 
