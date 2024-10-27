@@ -28,12 +28,10 @@ void add(BigNum_t** a, BigNum_t* b){
 		/* handle digit overflow */
 		if(digit > (BASE-1)){
 			result->digits[i] = (int)(digit - BASE);
-			
 			carry = 1;
 		}
 		else{
 			result->digits[i] = (int)digit;
-			
 			carry = 0;
 		}
 		
@@ -42,7 +40,6 @@ void add(BigNum_t** a, BigNum_t* b){
 		if(++result->size >= result->capacity)
 			expand_BigNum(result, result->capacity+1);
 
-		
 		i++;
 	}
 
@@ -187,90 +184,79 @@ void divide_by_digit(BigNum_t** a, int b){
 
 void divide(BigNum_t** a, BigNum_t* b) {
     BigNum_t* A = *a;
-
-	/*
-	if (A->size == 1 && b->size == 1)
-        *a = int_to_BigNum(A->digits[0] / b->digits[0]);
-    if (A->size < b->size)
-        *a = int_to_BigNum(0);
-	*/
-
-    if (b->size == 1){
-        divide_by_digit(&A, b->digits[0]);	
+	
+	if(b->size == 1){
+		divide_by_digit(&A, b->digits[0]);
 		*a = A;
 		return;
 	}
-
-	/* upscale b */
-	int msb = b->digits[b->size-1];
-	int comp = 1000000000;
+	/* multiply a and b by a factor
+	   in order for first digit of b
+	   to be close to BASE-1 (better estimations)*/
 	int scale = 1;
-	while(comp > msb){
-		comp /= 10;
+	while(b->digits[b->size-1] > scale){
 		scale *= 10;
-	
 	}
-	scale /= 10;
-	if(scale == 1000000000)
-		scale /= 10;
+	scale = BASE / scale;
 	multiply(&b, int_to_BigNum(scale));
 	multiply(&A, int_to_BigNum(scale));
-
-	BigNum_t* temp;
+	
 	BigNum_t* one = int_to_BigNum(1);
     BigNum_t* result = init_BigNum(A->size);
     BigNum_t* quotient;
-	int q; // ???
 	BigNum_t* estimate;
-	BigNum_t* h; //???
-
+	
+	
+	/* extract (b->size+1) digits from a) */
 	add_leading_zeros(A, A->size + 1);
 	BigNum_t* part = copy_BigNum(A);
-	int i = 0;
-	while(i < (A->size-b->size-1)){
+	int j = 0;
+	while(j < (A->size-b->size-1)){
 		shift_right(part);
-		i++;
+		j++;
 	}
-	
-
-	i = A->size-1-b->size;
+	int i = A->size-1-b->size;
 	result->size = i+1;
+
+	/* long division */
 	while(i >= 0){
+		
+		/* estimate single digit of result
+		   by considering only first digit of b */
 		quotient = copy_BigNum(part);
 		divide_by_digit(&quotient, b->digits[b->size-1]);
-		
-		int j = 0;
+		j = 0;
 		while(j < b->size-1){
 			shift_right(quotient);
 			j++;
 		}
 
-		
 		estimate = copy_BigNum(b);
 		multiply(&estimate, quotient);
-
+		
+		/* if estimation is larger that 
+		   part considered part of a
+		   - subtract from it */
 		while(compare(estimate, part)==1){
-			subtract(&quotient, int_to_BigNum(1));
+			subtract(&quotient, one);
 			
 			subtract(&estimate, b);
 		}
-
 		subtract(&part, estimate);		
 		
-		// update part
+		/* adjust part for next step of division */
 		shift_left(part);
 		part->size--;
-		
 		if(i > 0)
 			part->digits[0] = A->digits[i-1];
 
+		
 		result->digits[i] = quotient->digits[0]; 
 		
-
 		destroy_BigNum(quotient);
 		destroy_BigNum(estimate);
-		i--;
 		
+		i--;
 	}
 	
 	destroy_BigNum(part);
@@ -280,10 +266,9 @@ void divide(BigNum_t** a, BigNum_t* b) {
 }
 
 BigNum_t* fast_exp(BigNum_t* base, BigNum_t* exponent){
-	int n = exponent->digits[0]; // TODO: fix
-	// declare y = 1
+	// TODO: adjust for bigger exponents
+	int n = exponent->digits[0]; 
 	BigNum_t* y = int_to_BigNum(1);
-	// x as a copy of base
 	BigNum_t* x = copy_BigNum(base);
 	
 	BigNum_t* temp;
@@ -304,6 +289,9 @@ BigNum_t* fast_exp(BigNum_t* base, BigNum_t* exponent){
 	return x;
 }
 
-BigNum_t* exponentiate(BigNum_t* base, BigNum_t* exponent){
-	return fast_exp(base, exponent);
+void exponentiate(BigNum_t** base, BigNum_t* exponent){
+	if(compare(exponent, int_to_BigNum(0))==0)
+		*base = int_to_BigNum(1);
+	else
+		*base = fast_exp(*base, exponent);
 }

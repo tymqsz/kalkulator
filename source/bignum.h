@@ -7,6 +7,8 @@ typedef struct{
 	int size;
 } BigNum_t;
 
+char* BigNum_to_string(BigNum_t*);
+
 BigNum_t* init_BigNum(int);
 
 void destroy_BigNum(BigNum_t*);

@@ -3,6 +3,7 @@
 #include<stdio.h>
 #include<string.h>
 
+#define MAX_STRING_LEN 1000000
 
 BigNum_t* init_BigNum(int capacity){
 	BigNum_t* num = malloc(sizeof(*num));
@@ -110,31 +111,6 @@ int compare(BigNum_t* a, BigNum_t* b){
 	return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BigNum_t* copy_BigNum(BigNum_t* num){
 	BigNum_t* copy = init_BigNum(num->capacity);
 	copy->size = num->size;
@@ -185,6 +161,28 @@ BigNum_t* string_to_BigNum(char* string) {
 
     return num;
 }
+
+char* BigNum_to_string(BigNum_t* num){
+	remove_leading_zeros(num);
+
+	char* result = malloc(MAX_STRING_LEN);
+	sprintf(result, "%d", num->digits[num->size-1]);
+
+	for (int i = num->size-2; i >= 0; i--) {
+        char temp[12]; // Enough to hold a maximum integer
+        sprintf(temp, "%09d", num->digits[i]);
+        
+        if (strlen(result) + strlen(temp) + 1 < MAX_STRING_LEN) {
+            strcat(result, temp); // Append temp to result
+        } else {
+            fprintf(stderr, "Warning: Result string exceeded maximum length\n");
+            break;
+        }
+    }
+
+	return result;
+}
+
 
 void print_BigNum(BigNum_t* num){
 	int i = num->size-1;
