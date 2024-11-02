@@ -10,11 +10,13 @@
 #define MAX_LINE 1000000
 #define MAX_ARGS 100
 
-#define OUT "c_out.txt"
+#define OUT "../assets/c_out.txt"
 
 char* calculate(int arg_cnt, BigNum_t* args[], char oper, int base){
 	if(arg_cnt != 2)
 		exit(1);
+	
+	BigNum_t* modulo;
 
 	switch (oper) {
         case '+':
@@ -24,7 +26,7 @@ char* calculate(int arg_cnt, BigNum_t* args[], char oper, int base){
             multiply(&args[0], args[1]);
             break;
         case '/':  // Use '/' instead of '\\' for division
-            divide(&args[0], args[1]);
+            divide(&args[0], args[1], &modulo);
             break;
         case '^':
             exponentiate(&args[0], args[1]);
@@ -100,10 +102,14 @@ void process_input_file(char* filename){
 
 
 int main(int argc, char** argv){
-	char filename[] = "input.txt";
+	char filename[] = "../assets/input.txt";
 	
-	process_input_file(filename);
+	//process_input_file(filename);
+	
+	BigNum_t* a = string_to_BigNum("1023812093810951319283711239871293817293817293817293817298371298371298371293871293871293819283912873912837192837192837129381293871293871283719283791292899797979717391793719739173917123456789987654321");
+	char* res = convert_from_decimal(a, 16);
 
+	printf("%s\n", res);
 	return 0;
 
 }
