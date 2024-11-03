@@ -16,7 +16,7 @@ char* calculate(int arg_cnt, BigNum_t* args[], char oper, int base){
 	if(arg_cnt != 2)
 		exit(1);
 	
-	BigNum_t* modulo;
+	BigNum_t* modulo = init_BigNum(4);
 
 	switch (oper) {
         case '+':
@@ -36,7 +36,9 @@ char* calculate(int arg_cnt, BigNum_t* args[], char oper, int base){
             return NULL;
     }
 	
+	destroy_BigNum(modulo);
 	char* result = BigNum_to_string(args[0]);
+	destroy_BigNum(args[0]);
 	return result;
 }
 
@@ -63,10 +65,11 @@ void process_input_file(char* filename){
 	int base, target_base;
 	char op;
 	BigNum_t* args[MAX_ARGS];
-	char* result = malloc(MAX_LINE);
+	char* result;
 	int arg_cnt = 0;
 	int base_change;
-
+	
+	int K = 0;
 	while(fgets(line, MAX_LINE, file)){
 		base_change = 1;
 		if(sscanf(line, "%d %d", &base, &target_base)!=2){
@@ -91,12 +94,15 @@ void process_input_file(char* filename){
 			result = change_base(arg_cnt, args, base, target_base);
 		else
 			result = calculate(arg_cnt, args, op, base);
-		
-		fprintf(out, "%s\n\n", result);
-		//for(int i = 0; i < arg_cnt; i++)
-		//	destroy_BigNum(args[i]);
-	}
 
+
+		fprintf(out, "%s\n\n", result);
+		free(result);
+	}
+	
+	free(line);
+	fclose(file);
+	fclose(out);
 }
 
 
@@ -104,13 +110,8 @@ void process_input_file(char* filename){
 int main(int argc, char** argv){
 	char filename[] = "../assets/input.txt";
 	
-	//process_input_file(filename);
+	process_input_file(filename);
 	
-	BigNum_t* a = string_to_BigNum("1023812093810951319283711239871293817293817293817293817298371298371298371293871293871293819283912873912837192837192837129381293871293871283719283791292899797979717391793719739173917123456789987654321");
-	char* res = convert_from_decimal(a, 16);
-
-	printf("%s\n", res);
 	return 0;
 
 }
-

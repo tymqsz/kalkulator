@@ -172,7 +172,8 @@ void divide_by_digit(BigNum_t** a, int b, int* mod){
 		result->digits[i-1] = quotient;
 		
 		digit1 = prev_digit;
-		digit2 = A->digits[i-2];
+		if(i-2 >= 2)
+			digit2 = A->digits[i-2];
 		
 		i--;
 	}
@@ -185,13 +186,15 @@ void divide_by_digit(BigNum_t** a, int b, int* mod){
 }
 
 void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
-    BigNum_t* A = *a;
+	destroy_BigNum(*modulo);
+	BigNum_t* A = copy_BigNum(*a);
 	int* mod = malloc(sizeof(int));
 
 	if(b->size == 1){
 		divide_by_digit(&A, b->digits[0], mod);
 		*modulo = int_to_BigNum(*mod);
-
+		free(mod);
+		destroy_BigNum(*a);
 		*a = A;
 		return;
 	}
@@ -204,11 +207,13 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 		scale *= 10;
 	}
 	scale = BASE / scale;
-	multiply(&b, int_to_BigNum(scale));
-	multiply(&A, int_to_BigNum(scale));
+	BigNum_t* SCALE = int_to_BigNum(scale);
+	multiply(&b, SCALE);
+	multiply(&A, SCALE);
 	
 	BigNum_t* one = int_to_BigNum(1);
     BigNum_t* result = init_BigNum(A->size);
+	result->digits[0] = 0;
     BigNum_t* quotient;
 	BigNum_t* estimate;
 	
@@ -222,8 +227,7 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 		j++;
 	}
 	int i = A->size-1-b->size;
-	result->size = i+1;
-
+	// write digit in reverse and reverse at the end
 	/* long division */
 	while(i >= 0){
 		/* estimate single digit of result
@@ -248,7 +252,6 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 			subtract(&estimate, b);
 		}
 		subtract(&part, estimate);		
-		*modulo = copy_BigNum(part);
 		
 		/* adjust part for next step of division */
 		shift_left(part);
@@ -257,29 +260,44 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 			part->digits[0] = A->digits[i-1];
 
 		
-		result->digits[i] = quotient->digits[0]; 
-		
+		result->digits[result->size++] = quotient->digits[0]; 
+
 		destroy_BigNum(quotient);
 		destroy_BigNum(estimate);
 		
 		i--;
 	}
-	
+	/* reverse result */ // TODO: UNNECESSARY
+	if(result->size==0)
+		result->size = 1;
+	i = 0;
+	int temp;
+	while( i < result->size/2){
+		temp = result->digits[i];
+		result->digits[i] = result->digits[result->size-1-i];
+		result->digits[result->size-1-i] = temp;
+		i++;
+	}
+
+	*modulo = copy_BigNum(part);
 	destroy_BigNum(part);
 	destroy_BigNum(one);
-	
+	destroy_BigNum(SCALE);
+
 	divide_by_digit(modulo, scale, mod);
-	print_BigNum(*modulo);
+	free(mod);
+	destroy_BigNum(*a);
+	destroy_BigNum(A);
+	destroy_BigNum(b);
 	*a = result;
 }
 
-BigNum_t* fast_exp(BigNum_t* base, BigNum_t* exponent){
+BigNum_t* fast_exp(BigNum_t** base, BigNum_t* exponent){
 	// TODO: adjust for bigger exponents
 	int n = exponent->digits[0]; 
 	BigNum_t* y = int_to_BigNum(1);
-	BigNum_t* x = copy_BigNum(base);
-	
-	BigNum_t* temp;
+	BigNum_t* x = copy_BigNum(*base);
+	destroy_BigNum(*base);
 
 	while(n > 1){
 		if(n % 2 == 1){
@@ -293,15 +311,23 @@ BigNum_t* fast_exp(BigNum_t* base, BigNum_t* exponent){
 	}
 
 	multiply(&x, y);
-
+	
+	destroy_BigNum(y);
 	return x;
 }
 
 void exponentiate(BigNum_t** base, BigNum_t* exponent){
-	if(compare(exponent, int_to_BigNum(0))==0)
-		*base = int_to_BigNum(1);
+	BigNum_t* zero = int_to_BigNum(0);
+	
+	if(compare(exponent, zero)==0){
+		BigNum_t* one = int_to_BigNum(1);
+		destroy_BigNum(*base);
+		*base = one;
+	}
 	else
-		*base = fast_exp(*base, exponent);
+		*base = fast_exp(base, exponent);
+	
+	destroy_BigNum(zero);
 }
 
 

@@ -44,7 +44,7 @@ void shift_left(BigNum_t* num){
 }
 
 void remove_leading_zeros(BigNum_t* num){
-	while(num->size > 0 && num->digits[num->size-1] == 0){
+	while(num->size > 1 && num->digits[num->size-1] == 0){
 		num->size--;
 	}
 }
@@ -116,7 +116,7 @@ BigNum_t* copy_BigNum(BigNum_t* num){
 	copy->size = num->size;
 
 	int i = 0;
-	while(i < num->size){
+	while(i < num->size){ // TODO: VERIFY -1
 		copy->digits[i] = num->digits[i];
 		i++;
 	}
@@ -164,6 +164,8 @@ BigNum_t* string_to_BigNum(char* string) {
 
 char* BigNum_to_string(BigNum_t* num){
 	remove_leading_zeros(num);
+	
+	//if(num->size == 0) return '\0';
 
 	char* result = malloc(MAX_STRING_LEN);
 	sprintf(result, "%d", num->digits[num->size-1]);

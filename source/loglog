@@ -1,0 +1,14 @@
+==6041== Memcheck, a memory error detector
+==6041== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==6041== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==6041== Command: ./main
+==6041== Parent PID: 3443
+==6041== 
+==6041== 
+==6041== HEAP SUMMARY:
+==6041==     in use at exit: 0 bytes in 0 blocks
+==6041==   total heap usage: 90,917 allocs, 90,917 frees, 116,985,335 bytes allocated
+==6041== 
+==6041== All heap blocks were freed -- no leaks are possible
+==6041== 
+==6041== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
