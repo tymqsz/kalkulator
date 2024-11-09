@@ -188,6 +188,7 @@ void divide_by_digit(BigNum_t** a, int b, int* mod){
 void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 	destroy_BigNum(*modulo);
 	BigNum_t* A = copy_BigNum(*a);
+	BigNum_t* B = copy_BigNum(b);
 	int* mod = malloc(sizeof(int));
 
 	if(b->size == 1){
@@ -208,7 +209,7 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 	}
 	scale = BASE / scale;
 	BigNum_t* SCALE = int_to_BigNum(scale);
-	multiply(&b, SCALE);
+	multiply(&B, SCALE);
 	multiply(&A, SCALE);
 	
 	BigNum_t* one = int_to_BigNum(1);
@@ -222,25 +223,25 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 	add_leading_zeros(A, A->size + 1);
 	BigNum_t* part = copy_BigNum(A);
 	int j = 0;
-	while(j < (A->size-b->size-1)){
+	while(j < (A->size-B->size-1)){
 		shift_right(part);
 		j++;
 	}
-	int i = A->size-1-b->size;
+	int i = A->size-1-B->size;
 	// write digit in reverse and reverse at the end
 	/* long division */
 	while(i >= 0){
 		/* estimate single digit of result
 		   by considering only first digit of b */
 		quotient = copy_BigNum(part);
-		divide_by_digit(&quotient, b->digits[b->size-1], mod);
+		divide_by_digit(&quotient, B->digits[B->size-1], mod);
 		j = 0;
-		while(j < b->size-1){
+		while(j < B->size-1){
 			shift_right(quotient);
 			j++;
 		}
 
-		estimate = copy_BigNum(b);
+		estimate = copy_BigNum(B);
 		multiply(&estimate, quotient);
 		
 		/* if estimation is larger that 
@@ -249,7 +250,7 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 		while(compare(estimate, part)==1){
 			subtract(&quotient, one);
 			
-			subtract(&estimate, b);
+			subtract(&estimate, B);
 		}
 		subtract(&part, estimate);		
 		
@@ -288,7 +289,7 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 	free(mod);
 	destroy_BigNum(*a);
 	destroy_BigNum(A);
-	destroy_BigNum(b);
+	destroy_BigNum(B);
 	*a = result;
 }
 

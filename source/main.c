@@ -39,6 +39,7 @@ char* calculate(int arg_cnt, BigNum_t* args[], char oper, int base){
 	destroy_BigNum(modulo);
 	char* result = BigNum_to_string(args[0]);
 	destroy_BigNum(args[0]);
+	destroy_BigNum(args[1]);
 	return result;
 }
 
@@ -97,6 +98,7 @@ void process_input_file(char* filename){
 
 
 		fprintf(out, "%s\n\n", result);
+		printf("%d.\n", K++);
 		free(result);
 	}
 	
