@@ -370,51 +370,69 @@ char get_char(int n){
 BigNum_t* convert_to_decimal(char* string, int base){
 	BigNum_t* B = int_to_BigNum(base);
 	BigNum_t* result = init_BigNum(DEFAULT_CAPACITY);
-	BigNum_t* current = init_BigNum(DEFAULT_CAPACITY);
+	BigNum_t* current;
 	BigNum_t* current_base = int_to_BigNum(1);
 	int digit;
+	BigNum_t* D;
 
 	int len = strlen(string);
 	int i = 0;
 	while(i < len){
 		current = copy_BigNum(current_base);
 		digit = get_value(string[len-i-1]);
+	
+		D = int_to_BigNum(digit);
+		multiply(&current, D);
+		destroy_BigNum(D);
 
-		multiply(&current, int_to_BigNum(digit));
-
-		add(&result, current);
+		add(&result, current);	
 		destroy_BigNum(current);
 
 		multiply(&current_base, B);
 		i++;
 	}
-
+	
+	destroy_BigNum(B);
+	destroy_BigNum(current_base);
 	return result;
 }
 
 char* convert_from_decimal(BigNum_t* num, int base){
 	BigNum_t* B = int_to_BigNum(base);
 	BigNum_t* zero = int_to_BigNum(0);
-	BigNum_t* modulo;
+	BigNum_t* modulo = init_BigNum(4);
+	BigNum_t* N = copy_BigNum(num);
 	int mod;
 	char* result = malloc(1000000);
 	
+	//handel unary TODO:
 	int i = 0;
-	while(compare(num, zero) == 1){
-		divide(&num, B, &modulo);
+	while(compare(N, zero) == 1){
+		divide(&N, B, &modulo);
 
 		// modulo always one digit
 		mod = modulo->digits[0];
 		result[i] = get_char(mod);
 		i++;
 	}
-
+	if(i == 0){
+		result[0] = '0';
+		result[1] = '\0';
+	}
+	else
+		result[i] = '\0';
+	
 	int length = strlen(result);
     for (int i = 0; i < length / 2; i++) {
         char temp = result[i];
         result[i] = result[length - i - 1];
         result[length - i - 1] = temp;
     }
+	
+	destroy_BigNum(B);
+	destroy_BigNum(zero);
+	destroy_BigNum(modulo);
+	destroy_BigNum(N);
 
 	return result;
 }

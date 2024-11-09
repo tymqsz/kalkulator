@@ -16,10 +16,18 @@ char* calculate(int arg_cnt, char* args[], char oper, int base){
 	if(arg_cnt != 2)
 		exit(1);
 	
-	BigNum_t* a = string_to_BigNum(args[0]);
-	BigNum_t* b = string_to_BigNum(args[1]);
-	BigNum_t* modulo = init_BigNum(4);
+	BigNum_t* a;
+	BigNum_t* b;
+	if(base == 10){
+		a = string_to_BigNum(args[0]);
+		b = string_to_BigNum(args[1]);
+	}
+	else{
+		a = convert_to_decimal(args[0], base);
+		b = convert_to_decimal(args[1], base);
+	}
 
+	BigNum_t* modulo = init_BigNum(4);
 	switch (oper) {
         case '+':
             add(&a, b);
@@ -43,17 +51,28 @@ char* calculate(int arg_cnt, char* args[], char oper, int base){
             return NULL;
     }
 	
-	destroy_BigNum(modulo);
-	char* result = BigNum_to_string(a);
+	char* result;
+	if(base == 10)
+		result = BigNum_to_string(a);
+	else
+		result = convert_from_decimal(a, base);
+	
 	destroy_BigNum(a);
 	destroy_BigNum(b);
+	destroy_BigNum(modulo);
+	
 	return result;
 }
 
 char* change_base(int arg_cnt, char* args[], int base1, int base2){
-	printf("changing base\n");
-
-	return NULL;
+	if(arg_cnt != 1)
+		exit(1);
+	
+	BigNum_t* decimal = convert_to_decimal(args[0], base1);
+	char* result = convert_from_decimal(decimal, base2);
+	
+	destroy_BigNum(decimal);
+	return result; 
 }
 
 char* strip(char *str) {
@@ -86,7 +105,7 @@ void process_input_file(char* filename){
 			sscanf(line, "%c %d", &op, &base);
 			base_change = 0;
 		}
-
+		
 		empty_cnt = 0;
 		arg_cnt = 0;
 		while(empty_cnt < 3 && fgets(line, MAX_LINE, file)){
