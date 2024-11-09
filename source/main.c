@@ -12,24 +12,31 @@
 
 #define OUT "../assets/c_out.txt"
 
-char* calculate(int arg_cnt, BigNum_t* args[], char oper, int base){
+char* calculate(int arg_cnt, char* args[], char oper, int base){
 	if(arg_cnt != 2)
 		exit(1);
 	
+	BigNum_t* a = string_to_BigNum(args[0]);
+	BigNum_t* b = string_to_BigNum(args[1]);
 	BigNum_t* modulo = init_BigNum(4);
 
 	switch (oper) {
         case '+':
-            add(&args[0], args[1]);
+            add(&a, b);
             break;
         case '*':
-            multiply(&args[0], args[1]);
+            multiply(&a, b);
             break;
-        case '/':  // Use '/' instead of '\\' for division
-            divide(&args[0], args[1], &modulo);
+        case '/':  
+            divide(&a, b, &modulo);
             break;
+		case '%':
+            divide(&a, b, &modulo);
+			destroy_BigNum(a);
+			a = copy_BigNum(modulo);
+			break;
         case '^':
-            exponentiate(&args[0], args[1]);
+            exponentiate(&a, b);
             break;
         default:
             fprintf(stderr, "Error: Unsupported operation '%c'.\n", oper);
@@ -37,13 +44,13 @@ char* calculate(int arg_cnt, BigNum_t* args[], char oper, int base){
     }
 	
 	destroy_BigNum(modulo);
-	char* result = BigNum_to_string(args[0]);
-	destroy_BigNum(args[0]);
-	destroy_BigNum(args[1]);
+	char* result = BigNum_to_string(a);
+	destroy_BigNum(a);
+	destroy_BigNum(b);
 	return result;
 }
 
-char* change_base(int arg_cnt, BigNum_t* args[], int base1, int base2){
+char* change_base(int arg_cnt, char* args[], int base1, int base2){
 	printf("changing base\n");
 
 	return NULL;
@@ -65,7 +72,9 @@ void process_input_file(char* filename){
 	char* line =  malloc(MAX_LINE);
 	int base, target_base;
 	char op;
-	BigNum_t* args[MAX_ARGS];
+	char* args[MAX_ARGS];
+	for(int i = 0; i < MAX_ARGS; i++)
+		args[i] = malloc(MAX_LINE);
 	char* result;
 	int arg_cnt = 0;
 	int base_change;
@@ -87,7 +96,7 @@ void process_input_file(char* filename){
 				empty_cnt = 0;
 				
 				line = strip(line);
-				args[arg_cnt++] = string_to_BigNum(line);
+				strcpy(args[arg_cnt++],line);
 			}
 		}
 		
@@ -102,6 +111,8 @@ void process_input_file(char* filename){
 		free(result);
 	}
 	
+	for(int i = 0; i < MAX_ARGS; i++)
+		free(args[i]);
 	free(line);
 	fclose(file);
 	fclose(out);

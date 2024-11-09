@@ -172,7 +172,7 @@ void divide_by_digit(BigNum_t** a, int b, int* mod){
 		result->digits[i-1] = quotient;
 		
 		digit1 = prev_digit;
-		if(i-2 >= 2)
+		if(i-2 >= 0)
 			digit2 = A->digits[i-2];
 		
 		i--;
@@ -279,12 +279,13 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 		result->digits[result->size-1-i] = temp;
 		i++;
 	}
-
+	
 	*modulo = copy_BigNum(part);
+	shift_right(*modulo);
 	destroy_BigNum(part);
 	destroy_BigNum(one);
 	destroy_BigNum(SCALE);
-
+	
 	divide_by_digit(modulo, scale, mod);
 	free(mod);
 	destroy_BigNum(*a);
