@@ -189,12 +189,25 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 	destroy_BigNum(*modulo);
 	BigNum_t* A = copy_BigNum(*a);
 	BigNum_t* B = copy_BigNum(b);
+	
+	if(compare(A, B) == -1){
+		destroy_BigNum(*a);
+		destroy_BigNum(B);
+		
+		*a = int_to_BigNum(0);
+		*modulo = copy_BigNum(A);
+		destroy_BigNum(A);
+		return;
+	}
+
+
 	int* mod = malloc(sizeof(int));
 
 	if(b->size == 1){
 		divide_by_digit(&A, b->digits[0], mod);
 		*modulo = int_to_BigNum(*mod);
 		free(mod);
+		destroy_BigNum(B);
 		destroy_BigNum(*a);
 		*a = A;
 		return;
