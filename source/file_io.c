@@ -9,43 +9,49 @@
 #define MAX_ARG_CNT 100
 
 char* calculate(int arg_cnt, char* args[], char oper, int base){
-	if(arg_cnt != 2)
-		return "\0";
 	
+	BigNum_t* modulo = init_BigNum(4);
 	BigNum_t* a;
 	BigNum_t* b;
-	if(base == 10){
+	if(base == 10)
 		a = string_to_BigNum(args[0]);
-		b = string_to_BigNum(args[1]);
-	}
-	else{
+	else
 		a = convert_to_decimal(args[0], base);
-		b = convert_to_decimal(args[1], base);
-	}
 
-	BigNum_t* modulo = init_BigNum(4);
-	switch (oper) {
-        case '+':
-            add(&a, b);
-            break;
-        case '*':
-            multiply(&a, b);
-            break;
-        case '/':  
-            divide(&a, b, &modulo);
-            break;
-		case '%':
-            divide(&a, b, &modulo);
-			destroy_BigNum(a);
-			a = copy_BigNum(modulo);
-			break;
-        case '^':
-            exponentiate(&a, b);
-            break;
-        default:
-            fprintf(stderr, "Error: Unsupported operation '%c'.\n", oper);
-            return NULL;
-    }
+	int i = 1;
+	while(i < arg_cnt){
+		if(base == 10){
+			b = string_to_BigNum(args[i]);
+		}
+		else{
+			b = convert_to_decimal(args[i], base);
+		}
+
+		switch (oper) {
+			case '+':
+				add(&a, b);
+				break;
+			case '*':
+				multiply(&a, b);
+				break;
+			case '/':  
+				divide(&a, b, &modulo);
+				break;
+			case '%':
+				divide(&a, b, &modulo);
+				destroy_BigNum(a);
+				a = copy_BigNum(modulo);
+				break;
+			case '^':
+				exponentiate(&a, b);
+				break;
+			default:
+				fprintf(stderr, "Error: Unsupported operation '%c'.\n", oper);
+				return NULL;
+		}
+
+		i++;
+	}
 	
 	char* result;
 	if(base == 10)
@@ -99,12 +105,9 @@ int is_oper_line(char* line){
 }
 
 
-void process_input_file(char* filename){
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        perror("Error opening file");
-        return;
-    }
+void process_input_file(char* in, char* out){
+    FILE* in_file = fopen(in, "r");
+	FILE* out_file = fopen(out, "w");
 
     int arg_cnt = 0;
     int base1, base2;
@@ -120,10 +123,9 @@ void process_input_file(char* filename){
     int empty_line_cnt = 0;
     int base_conversion = 0; // Default to 0; adjust as needed
 
-    while (fgets(line, MAX_ARG_LEN, file)) {
-
+    while (fgets(line, MAX_ARG_LEN, in_file)) {
         // Remove trailing newline
-        line[strcspn(line, "\n")] = '\0';
+        line[strcspn(line, "\r\n")] = '\0';
 
 		if(line[0] == '\0'){
 			empty_line_cnt++;
@@ -133,7 +135,7 @@ void process_input_file(char* filename){
 				else
 					output = calculate(arg_cnt, args, oper, base1);
 				
-				printf("%s\n", output);
+				fprintf(out_file, "%s\n\n", output);
 				arg_cnt = 0;
 
 				// Free args
@@ -152,8 +154,10 @@ void process_input_file(char* filename){
 				} else if (sscanf(line, "%c %d", &oper, &base1) == 2) {
 					base_conversion = 0;
 				}
+				fprintf(out_file, "%s\n\n", line);
 			} else {
 				strcpy(args[arg_cnt++], line);
+				fprintf(out_file, "%s\n\n", line);
 			}
 		}
 	}
@@ -162,10 +166,11 @@ void process_input_file(char* filename){
 		output = change_base(arg_cnt, args, base1, base2);
 	else
 		output = calculate(arg_cnt, args, oper, base1);	
-	printf("%s\n", output);
+	fprintf(out_file, "%s\n", output);
 
 
-    fclose(file);
+	fclose(in_file);
+    fclose(out_file);
 
     // Free memory
     for (i = 0; i < MAX_ARG_CNT; i++) {
