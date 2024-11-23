@@ -3,9 +3,8 @@ import sys
 
 sys.set_int_max_str_digits(1000000000)
 
-OPER_CNT = 100       
+OPER_CNT = 1000       
 opers = ['*', '+', '/', '^', '%', 'c']
-opers = ['/']
 sizes = [10**x for x in range(1000)]
 
 def numberToBase(n, base):
@@ -36,7 +35,6 @@ with open("../source/input.txt", "w") as f:
 		size2 = random.choice(sizes)
 		
 		base = random.randint(2, 16)
-
 		if operation == 'c':
 			base2 = random.randint(2, 16)
 			base1 = random.randint(2, 16)
@@ -44,19 +42,18 @@ with open("../source/input.txt", "w") as f:
 		else:
 			f.write(f"{operation} {base}\r\n\r\n")
 		
-		n_args = [1]
+		n_args = [1, 3, 4]
 		ARG_CNT = random.choice(n_args) 
 		for _ in range(ARG_CNT):
 			size1 = random.choice(sizes)
 			size2 = random.choice(sizes)
-			
 			num1 = random.randint(1, size1)
 			num2 = random.randint(1, size2)
 			
 
 			if operation == '^':
-				num1 = num1 % 10000
-				num2 = num2 % 10000
+				num1 = num1 % 1000
+				num2 = num2 % 1000
 			if operation == 'c':
 				num1 = numberToBase(num1, base1)
 				f.write(f"{num1}\r\n\r\n\r\n\r\n")
@@ -64,18 +61,5 @@ with open("../source/input.txt", "w") as f:
 				num1 = numberToBase(num1, base)
 				num2 = numberToBase(num2, base)
 				f.write(f"{num1}\r\n\r\n{num2}\r\n\r\n\r\n\r\n")
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

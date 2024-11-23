@@ -217,10 +217,11 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 	   in order for first digit of b
 	   to be close to BASE-1 (better estimations)*/
 	int scale = 1;
-	while(b->digits[b->size-1] > scale){
+	while(b->digits[b->size-1] >= scale){
 		scale *= 10;
 	}
 	scale = BASE / scale;
+	
 	BigNum_t* SCALE = int_to_BigNum(scale);
 	multiply(&B, SCALE);
 	multiply(&A, SCALE);
@@ -230,7 +231,6 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 	result->digits[0] = 0;
     BigNum_t* quotient;
 	BigNum_t* estimate;
-	
 	
 	/* extract (b->size+1) digits from a) */
 	add_leading_zeros(A, A->size + 1);

@@ -137,7 +137,7 @@ int argument_ok(char* arg, int base){
 void process_input_file(char* in, char* out){
     FILE* in_file = fopen(in, "r");
 	if(in_file == NULL){
-		fprintf(stderr, "brak mozliwosci odczytu pliku wejsciowego\n");
+			fprintf(stderr, "brak mozliwosci odczytu pliku wejsciowego\n");
 		return;
 	}
 	FILE* out_file = fopen(out, "w");
@@ -155,7 +155,7 @@ void process_input_file(char* in, char* out){
         args[i] = malloc(MAX_ARG_LEN);
     }
 	
-	char* output = malloc(MAX_ARG_LEN);
+	char* output;
     char line[MAX_ARG_LEN];
     int empty_line_cnt = 0;
     int operation_type = -1; /* operation_type type: 0->arithmetics, 1->base change, -1->invalid */
@@ -189,7 +189,6 @@ void process_input_file(char* in, char* out){
 				}
 				else if(operation_type == 0){
 					if(arg_correct){
-						output = malloc(MAX_ARG_LEN);
 						output = calculate(arg_cnt, args, operator, base1);
 					}
 					else{
@@ -261,7 +260,6 @@ void process_input_file(char* in, char* out){
 	}
 	else if(operation_type == 0){
 		if(arg_correct){
-			output = malloc(MAX_ARG_LEN);
 			output = calculate(arg_cnt, args, operator, base1);
 		}
 		else{
@@ -275,7 +273,7 @@ void process_input_file(char* in, char* out){
 	}
 	
 	fprintf(out_file, "%s\n\n", output);
-	//free(output);
+	free(output);
 
 	fclose(in_file);
     fclose(out_file);
