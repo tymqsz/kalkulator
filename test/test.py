@@ -24,7 +24,7 @@ def read_and_calculate(input_file, output_file):
         # Read and strip leading/trailing whitespace
         content = infile.read().strip()
         # Split the content by triple newlines to separate blocks
-        blocks = content.split('\n\n\n')
+        blocks = content.split('\r\n\r\n\r\n')
         
         for block in blocks:
             # Remove extra whitespace and split into lines
@@ -56,6 +56,7 @@ def read_and_calculate(input_file, output_file):
                     result = numberToBase(decimal, base2)
 
                 # Write the result to the output file
+                outfile.write(block)
                 outfile.write(f"{result}\n\n")
 
             except Exception as e:
@@ -63,4 +64,4 @@ def read_and_calculate(input_file, output_file):
                 continue  # Skip the block if any error occurs
 
 # Example usage (adjust paths as needed)
-read_and_calculate("../assets/input.txt", "../assets/output.txt")
+read_and_calculate("../source/input.txt", "../source/_py_output.txt")

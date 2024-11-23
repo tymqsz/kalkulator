@@ -368,6 +368,7 @@ char get_char(int n){
 
 
 BigNum_t* convert_to_decimal(char* string, int base){
+
 	BigNum_t* B = int_to_BigNum(base);
 	BigNum_t* result = init_BigNum(DEFAULT_CAPACITY);
 	BigNum_t* current;

@@ -5,7 +5,7 @@
 #include "calc.h"
 #include<ctype.h>
 
-#define MAX_ARG_LEN 1000
+#define MAX_ARG_LEN 100000
 #define MAX_ARG_CNT 100
 
 char* calculate(int arg_cnt, char* args[], char operator, int base){
@@ -155,12 +155,13 @@ void process_input_file(char* in, char* out){
         args[i] = malloc(MAX_ARG_LEN);
     }
 	
-	char* output;
+	char* output = malloc(MAX_ARG_LEN);
     char line[MAX_ARG_LEN];
     int empty_line_cnt = 0;
     int operation_type = -1; /* operation_type type: 0->arithmetics, 1->base change, -1->invalid */
 	int arg_correct = 1; /* correctness of arguments: 1->ok, 0-> not ok */
-
+	
+	int OPER_CNT = 0;
     while (fgets(line, MAX_ARG_LEN, in_file)) {
         
 		/* removing whitespaces at the end */
@@ -182,19 +183,23 @@ void process_input_file(char* in, char* out){
 						output = change_base(arg_cnt, args, base1, base2);
 					}
 					else{
-						output = "argumenty niepoprawne";
+						output = malloc(MAX_ARG_LEN);
+						strcpy(output, "argumenty niepoprawne");
 					}
 				}
 				else if(operation_type == 0){
 					if(arg_correct){
+						output = malloc(MAX_ARG_LEN);
 						output = calculate(arg_cnt, args, operator, base1);
 					}
 					else{
-						output = "argumenty niepoprawne";
+						output = malloc(MAX_ARG_LEN);
+						strcpy(output, "argumenty niepoprawne");
 					}
 				}
 				else{
-					output = "niedozwolona operacja"; /* incorrect operation_type -> skip */
+					output = malloc(MAX_ARG_LEN);
+					strcpy(output, "operacja niedozwolona");
 				}
 				
 				fprintf(out_file, "%s\n\n", output);
@@ -225,7 +230,8 @@ void process_input_file(char* in, char* out){
 						operation_type = -1;
 					}
 				}
-
+				OPER_CNT++;
+				printf("oper no.%d\n", OPER_CNT);
 				fprintf(out_file, "%s\n\n", line);
 			} else {
 				if(argument_ok(line, base1)){
@@ -234,29 +240,42 @@ void process_input_file(char* in, char* out){
 				else{
 					arg_correct = 0; /* set incorrect arg flag */
 				}
-			
 				arg_cnt++;
 				fprintf(out_file, "%s\n\n", line);
 			}
 		}
 	}
-
-	/* check if there is enough args */
+	
 	if((operation_type == 1 && arg_cnt < 1) || (operation_type == 0 && arg_cnt < 2)){
 		operation_type = -1;
 	}
+
 	if (operation_type == 1){
-		output = change_base(arg_cnt, args, base1, base2);
+		if(arg_correct){
+			output = change_base(arg_cnt, args, base1, base2);
+		}
+		else{
+			output = malloc(MAX_ARG_LEN);
+			strcpy(output, "argumenty niepoprawne");
+		}
 	}
 	else if(operation_type == 0){
-		output = calculate(arg_cnt, args, operator, base1);
+		if(arg_correct){
+			output = malloc(MAX_ARG_LEN);
+			output = calculate(arg_cnt, args, operator, base1);
+		}
+		else{
+			output = malloc(MAX_ARG_LEN);
+			strcpy(output, "argumenty niepoprawne");
+		}
 	}
 	else{
-		output = "\0"; /* incorrect operation_type -> skip */
+		output = malloc(MAX_ARG_LEN);
+		strcpy(output, "\n");
 	}
 	
 	fprintf(out_file, "%s\n\n", output);
-	free(output);
+	//free(output);
 
 	fclose(in_file);
     fclose(out_file);

@@ -3,10 +3,10 @@ import sys
 
 sys.set_int_max_str_digits(1000000000)
 
-OPER_CNT = 1000        
-MAX_NUM = int("1"+"0"*100)
+OPER_CNT = 100       
 opers = ['*', '+', '/', '^', '%', 'c']
-sizes = [10**x for x in range(40)]
+opers = ['/']
+sizes = [10**x for x in range(1000)]
 
 def numberToBase(n, base):
     if not (1 <= base <= 16):
@@ -28,7 +28,7 @@ def numberToBase(n, base):
     return result
 
 
-with open("../assets/input.txt", "w") as f:
+with open("../source/input.txt", "w") as f:
 	for _ in range(OPER_CNT):
 		operation = random.choice(opers)
 
@@ -37,20 +37,45 @@ with open("../assets/input.txt", "w") as f:
 		
 		base = random.randint(2, 16)
 
-		num1 = random.randint(1, size1)
-		num2 = random.randint(1, size2)
-		
-
-		if operation == '^':
-			num1 = num1 % 200
-			num2 = num2 % 50
-		
 		if operation == 'c':
 			base2 = random.randint(2, 16)
 			base1 = random.randint(2, 16)
-			num1 = numberToBase(num1, base1)
-			f.write(f"{base1} {base2}\n\n{num1}\n\n\n\n")
+			f.write(f"{base1} {base2}\r\n\r\n")
 		else:
-			num1 = numberToBase(num1, base)
-			num2 = numberToBase(num2, base)
-			f.write(f"{operation} {base}\n\n{num1}\n\n{num2}\n\n\n\n")
+			f.write(f"{operation} {base}\r\n\r\n")
+		
+		n_args = [1]
+		ARG_CNT = random.choice(n_args) 
+		for _ in range(ARG_CNT):
+			size1 = random.choice(sizes)
+			size2 = random.choice(sizes)
+			
+			num1 = random.randint(1, size1)
+			num2 = random.randint(1, size2)
+			
+
+			if operation == '^':
+				num1 = num1 % 10000
+				num2 = num2 % 10000
+			if operation == 'c':
+				num1 = numberToBase(num1, base1)
+				f.write(f"{num1}\r\n\r\n\r\n\r\n")
+			else:
+				num1 = numberToBase(num1, base)
+				num2 = numberToBase(num2, base)
+				f.write(f"{num1}\r\n\r\n{num2}\r\n\r\n\r\n\r\n")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
