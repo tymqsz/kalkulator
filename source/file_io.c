@@ -8,8 +8,7 @@
 #define MAX_ARG_LEN 1000
 #define MAX_ARG_CNT 100
 
-char* calculate(int arg_cnt, char* args[], char oper, int base){
-	
+char* calculate(int arg_cnt, char* args[], char operator, int base){
 	BigNum_t* modulo = init_BigNum(4);
 	BigNum_t* a;
 	BigNum_t* b;
@@ -27,7 +26,7 @@ char* calculate(int arg_cnt, char* args[], char oper, int base){
 			b = convert_to_decimal(args[i], base);
 		}
 
-		switch (oper) {
+		switch (operator) {
 			case '+':
 				add(&a, b);
 				break;
@@ -45,9 +44,6 @@ char* calculate(int arg_cnt, char* args[], char oper, int base){
 			case '^':
 				exponentiate(&a, b);
 				break;
-			default:
-				fprintf(stderr, "Error: Unsupported operation '%c'.\n", oper);
-				return NULL;
 		}
 
 		i++;
@@ -88,10 +84,10 @@ char* strip(char *str) {
 
 
 int is_oper_line(char* line){
-	char oper;
+	char operator;
 	int base1, base2;
 	
-    if (sscanf(line, " %c %d", &oper, &base1) == 2) {
+    if (sscanf(line, " %c %d", &operator, &base1) == 2) {
 		if(strchr(line, ' '))
 			return 1;
     }
@@ -104,14 +100,55 @@ int is_oper_line(char* line){
 	return 0;
 }
 
+int bases_ok(int base1, int base2){
+	if(base1 < 2 || base1 > 16 || base2 < 2 || base2 > 16)
+		return 0;
+	
+	return 1;
+}
+
+int operation_ok(char operator, int base){
+	char possible[] = "+/%^*";
+
+	if(base < 2 || base > 16 || strchr(possible, operator) == NULL)
+		return 0;
+	
+	return 1;
+}
+
+int argument_ok(char* arg, int base){
+	char all_digits[] = "0123456789ABCDEF";
+	char digits[16];
+	strncpy(digits, all_digits, base);
+	digits[base] = '\0';
+	
+	char* c = arg;
+	while(*c != '\0'){
+		if(strchr(digits, *c) == NULL)
+			return 0;
+
+		c++;
+	}
+
+	return 1;
+}
+
 
 void process_input_file(char* in, char* out){
     FILE* in_file = fopen(in, "r");
+	if(in_file == NULL){
+		fprintf(stderr, "brak mozliwosci odczytu pliku wejsciowego\n");
+		return;
+	}
 	FILE* out_file = fopen(out, "w");
+	if(out_file == NULL){
+		fprintf(stderr, "brak mozliwosci utworzenia pliku wyjsciowego\n");
+		return;
+	}
 
     int arg_cnt = 0;
     int base1, base2;
-    char oper;
+    char operator;
     char** args = malloc(sizeof(*args) * MAX_ARG_CNT);
     int i;
     for (i = 0; i < MAX_ARG_CNT; i++) {
@@ -121,58 +158,108 @@ void process_input_file(char* in, char* out){
 	char* output;
     char line[MAX_ARG_LEN];
     int empty_line_cnt = 0;
-    int base_conversion = 0; // Default to 0; adjust as needed
+    int operation_type = -1; /* operation_type type: 0->arithmetics, 1->base change, -1->invalid */
+	int arg_correct = 1; /* correctness of arguments: 1->ok, 0-> not ok */
 
     while (fgets(line, MAX_ARG_LEN, in_file)) {
-        // Remove trailing newline
+        
+		/* removing whitespaces at the end */
         line[strcspn(line, "\r\n")] = '\0';
 
 		if(line[0] == '\0'){
 			empty_line_cnt++;
+
+			/* if 3 empty lines in a row - perform operation_type */
 			if (empty_line_cnt == 3) {
-				if (base_conversion)
-					output = change_base(arg_cnt, args, base1, base2);
-				else
-					output = calculate(arg_cnt, args, oper, base1);
+				
+				/* check if there is enough args */
+				if((operation_type == 1 && arg_cnt < 1) || (operation_type == 0 && arg_cnt < 2)){
+					operation_type = -1;
+				}
+
+				if (operation_type == 1){
+					if(arg_correct){
+						output = change_base(arg_cnt, args, base1, base2);
+					}
+					else{
+						output = "argumenty niepoprawne";
+					}
+				}
+				else if(operation_type == 0){
+					if(arg_correct){
+						output = calculate(arg_cnt, args, operator, base1);
+					}
+					else{
+						output = "argumenty niepoprawne";
+					}
+				}
+				else{
+					output = "niedozwolona operacja"; /* incorrect operation_type -> skip */
+				}
 				
 				fprintf(out_file, "%s\n\n", output);
 				arg_cnt = 0;
-
-				// Free args
-				for (i = 0; i < MAX_ARG_CNT; i++) {
-					free(args[i]);
-					args[i] = malloc(MAX_ARG_LEN);
-				}
-
+				arg_correct = 1;
 			}
 		}
 		else{
 			empty_line_cnt = 0;
+			
+			/* update current operation_type type / load next arg */
 			if (is_oper_line(line)==1) {
+				
 				if (sscanf(line, "%d %d", &base1, &base2) == 2) {
-                base_conversion = 1;
-				} else if (sscanf(line, "%c %d", &oper, &base1) == 2) {
-					base_conversion = 0;
+					if(bases_ok(base1, base2) == 1){
+						operation_type = 1;
+					}
+					else{
+						operation_type = -1;
+					}
+
+				} else if (sscanf(line, "%c %d", &operator, &base1) == 2) {
+					if(operation_ok(operator, base1) == 1){
+						operation_type = 0;
+					}
+					else{
+						operation_type = -1;
+					}
 				}
+
 				fprintf(out_file, "%s\n\n", line);
 			} else {
-				strcpy(args[arg_cnt++], line);
+				if(argument_ok(line, base1)){
+					strcpy(args[arg_cnt], line);
+				}
+				else{
+					arg_correct = 0; /* set incorrect arg flag */
+				}
+			
+				arg_cnt++;
 				fprintf(out_file, "%s\n\n", line);
 			}
 		}
 	}
 
-	if (base_conversion)
+	/* check if there is enough args */
+	if((operation_type == 1 && arg_cnt < 1) || (operation_type == 0 && arg_cnt < 2)){
+		operation_type = -1;
+	}
+	if (operation_type == 1){
 		output = change_base(arg_cnt, args, base1, base2);
-	else
-		output = calculate(arg_cnt, args, oper, base1);	
-	fprintf(out_file, "%s\n", output);
+	}
+	else if(operation_type == 0){
+		output = calculate(arg_cnt, args, operator, base1);
+	}
+	else{
+		output = "\0"; /* incorrect operation_type -> skip */
+	}
+	
+	fprintf(out_file, "%s\n\n", output);
 
 
 	fclose(in_file);
     fclose(out_file);
 
-    // Free memory
     for (i = 0; i < MAX_ARG_CNT; i++) {
         free(args[i]);
     }
