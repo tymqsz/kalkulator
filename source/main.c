@@ -26,7 +26,8 @@ int main(int argc, char** argv){
 	}
 
 	process_input_file(input_filename, output_filename);
-		
+	
+	free(output_filename);
 	return 0;
 
 }

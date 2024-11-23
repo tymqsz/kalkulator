@@ -45,7 +45,8 @@ char* calculate(int arg_cnt, char* args[], char operator, int base){
 				exponentiate(&a, b);
 				break;
 		}
-
+		
+		destroy_BigNum(b);
 		i++;
 	}
 	
@@ -56,7 +57,6 @@ char* calculate(int arg_cnt, char* args[], char operator, int base){
 		result = convert_from_decimal(a, base);
 	
 	destroy_BigNum(a);
-	destroy_BigNum(b);
 	destroy_BigNum(modulo);
 	
 	return result;
@@ -200,6 +200,7 @@ void process_input_file(char* in, char* out){
 				fprintf(out_file, "%s\n\n", output);
 				arg_cnt = 0;
 				arg_correct = 1;
+				free(output);
 			}
 		}
 		else{
@@ -255,7 +256,7 @@ void process_input_file(char* in, char* out){
 	}
 	
 	fprintf(out_file, "%s\n\n", output);
-
+	free(output);
 
 	fclose(in_file);
     fclose(out_file);
