@@ -1,6 +1,5 @@
 import operator
 
-# Define the operations dictionary
 operations = {
     '+': operator.add,
     '*': operator.mul,
@@ -8,6 +7,10 @@ operations = {
     '^': operator.pow,
     '%': operator.mod
 }
+
+INPUT = "../source/input.txt"
+OUTPUT = "../source/py_output.txt"
+out = open(OUTPUT, "w")
 
 def numberToBase(n, base):
     digits = "0123456789ABCDEF"
@@ -19,49 +22,91 @@ def numberToBase(n, base):
         n //= base
     return result
 
-def read_and_calculate(input_file, output_file):
-    with open(input_file, "r") as infile, open(output_file, "w") as outfile:
-        # Read and strip leading/trailing whitespace
-        content = infile.read().strip()
-        # Split the content by triple newlines to separate blocks
-        blocks = content.split('\r\n\r\n\r\n')
-        
-        for block in blocks:
-            # Remove extra whitespace and split into lines
-            lines = [line.strip() for line in block.strip().splitlines() if line.strip()]
-            
-            # Ensure there are at least 3 lines for arithmetic operations
+def change_bases(arg_cnt, args, base1, base2):
+	if arg_cnt != 1:
+		return ""
+	
+	int_value = int(args[0], base1)
+	
+	result = numberToBase(int_value, base2)
+	
+	return result
 
-            try:
-                # Read the operation and base from the first line
-                oper_line = lines[0].strip()
+def calculate(arg_cnt, args, operator, base1):
+	args = [int(arg, base1) for arg in args]
+	result = operations[operator](args[0], args[1])
 
-                operation, base = oper_line.split()
-                base = int(base)
+	i = 2
+	while i < arg_cnt:
+		result = operations[operator][result, args[i]]
+	
+	result = numberToBase(result, base1)
+	return result
 
-                if operation in operations:
-                    # Perform the arithmetic operation
-                    num1 = lines[1].strip()
-                    num2 = lines[2].strip()
-                    num1 = int(num1, base)
-                    num2 = int(num2, base)
-                    result = operations[operation](num1, num2)
-                    result = numberToBase(result, base)
-                else:
-                    # Convert between bases if an arithmetic operation isn't specified
-                    base1 = int(operation)
-                    base2 = base
-                    num1 = lines[1].strip()
-                    decimal = int(num1, base1)
-                    result = numberToBase(decimal, base2)
+def oper_line(line):
+	split = line.split(' ')
 
-                # Write the result to the output file
-                outfile.write(block)
-                outfile.write(f"{result}\n\n")
+	if len(split) != 2:
+		return 0
+	
+	if split[0].isdigit():
+		return 2
+	return 1
 
-            except Exception as e:
-                print(f"Error processing block: {e}")
-                continue  # Skip the block if any error occurs
+with open(INPUT, "r") as file:
+	empty_cnt = 0
+	args = []
+	arg_cnt = 0
+	base1, base2 = -1, -1
+	operator = -1
+	oper_type = -1
+	arg_correct = 1
 
-# Example usage (adjust paths as needed)
-read_and_calculate("../source/input.txt", "../source/_py_output.txt")
+	
+	for line in file.readlines():
+		line = line.strip()
+		
+		if line == "":
+			empty_cnt += 1
+			
+			if empty_cnt == 3:
+				if oper_type == 1:
+					output = change_bases(arg_cnt, args, base1, base2)
+				elif oper_type == 0:
+					output = calculate(arg_cnt, args, operator, base1)
+
+				out.write(output+"\n\n")
+				arg_cnt = 0
+				args = []
+		else:
+			empty_cnt = 0
+
+			if oper_line(line) == 1: # calc
+				split = line.split()
+				operator = split[0]
+				base1 = int(split[1])
+				oper_type = 0
+			elif oper_line(line) == 2: # change
+				split = line.split()
+				base1 = int(split[0])
+				base2 = int(split[1])
+				oper_type = 1
+			else:
+				arg_cnt+=1
+				args.append(line)
+
+			out.write(line+"\n\n")
+
+	if oper_type == 1:
+		output = change_bases(arg_cnt, args, base1, base2)
+	elif oper_type == 0:
+		output = calculate(arg_cnt, args, operator, base1)
+
+	out.write(output+"\n\n")
+	arg_cnt = 0
+	args = []
+
+			
+
+
+
