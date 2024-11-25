@@ -196,7 +196,7 @@ void process_input_file(char* in, char* out){
 					strcpy(output, "operacja niedozwolona");
 				}
 				
-				fprintf(out_file, "%s\r\n\r\n", output);
+				fprintf(out_file, "%s\n\n", output);
 				arg_cnt = 0;
 				arg_correct = 1;
 				free(output);
@@ -228,7 +228,7 @@ void process_input_file(char* in, char* out){
 						operation_type = -1;
 					}
 				}
-				fprintf(out_file, "%s\r\n\r\n", line);
+				fprintf(out_file, "%s\n\n", line);
 			} else {
 				if(argument_ok(line, base1)){
 					strcpy(args[arg_cnt], line);
@@ -236,7 +236,7 @@ void process_input_file(char* in, char* out){
 				else{
 					arg_correct = 0; /* set incorrect arg flag */
 				}
-				fprintf(out_file, "%s\r\n\r\n", line);
+				fprintf(out_file, "%s\n\n", line);
 				arg_cnt++;
 			}
 		}
