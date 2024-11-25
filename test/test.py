@@ -1,5 +1,7 @@
+import sys
 import operator
 
+sys.set_int_max_str_digits(1000000)
 operations = {
     '+': operator.add,
     '*': operator.mul,
@@ -75,7 +77,7 @@ with open(INPUT, "r") as file:
 				elif oper_type == 0:
 					output = calculate(arg_cnt, args, operator, base1)
 
-				out.write(output+"\n\n")
+				out.write(output+"\r\n\r\n")
 				arg_cnt = 0
 				args = []
 		else:
@@ -95,14 +97,14 @@ with open(INPUT, "r") as file:
 				arg_cnt+=1
 				args.append(line)
 
-			out.write(line+"\n\n")
+			out.write(line+"\r\n\r\n")
 
 	if oper_type == 1:
 		output = change_bases(arg_cnt, args, base1, base2)
 	elif oper_type == 0:
 		output = calculate(arg_cnt, args, operator, base1)
 
-	out.write(output+"\n\n")
+	out.write(output+"\r\n\r\n")
 	arg_cnt = 0
 	args = []
 

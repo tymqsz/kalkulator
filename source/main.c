@@ -16,11 +16,10 @@ int main(int argc, char** argv){
 	}
 
 	char* input_filename = argv[1];
-	char* output_filename;
+	char* output_filename = malloc(MAX_FILENAME);
 	if(argc > 2)
-		output_filename = argv[2];
+		strcpy(output_filename,argv[2]);
 	else{
-		output_filename = malloc(MAX_FILENAME);
 		strcpy(output_filename, "out_");
 		strcat(output_filename, input_filename);
 	}

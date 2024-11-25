@@ -73,16 +73,6 @@ char* change_base(int arg_cnt, char* args[], int base1, int base2){
 	return result; 
 }
 
-char* strip(char *str) {
-	while (isspace((unsigned char)*str)) str++;
-	if (*str == '\0') return str;
-	char *end = str + strlen(str) - 1;
-	while (end > str && isspace((unsigned char)*end)) end--;
-	*(end + 1) = '\0';
-	return str;
-}
-
-
 int is_oper_line(char* line){
 	char operator;
 	int base1, base2;
@@ -108,6 +98,9 @@ int bases_ok(int base1, int base2){
 }
 
 int operation_ok(char operator, int base){
+	if(operator == 'f' || base == -1)
+		return 0;
+
 	char possible[] = "+/%^*";
 
 	if(base < 2 || base > 16 || strchr(possible, operator) == NULL)
@@ -117,6 +110,9 @@ int operation_ok(char operator, int base){
 }
 
 int argument_ok(char* arg, int base){
+	if(base == -1)
+		return 0;
+
 	char all_digits[] = "0123456789ABCDEF";
 	char digits[16];
 	strncpy(digits, all_digits, base);
@@ -147,8 +143,8 @@ void process_input_file(char* in, char* out){
 	}
 
     int arg_cnt = 0;
-    int base1, base2;
-    char operator;
+    int base1 = -1, base2 = -1;
+    char operator = 'f';
     char** args = malloc(sizeof(*args) * MAX_ARG_CNT);
     int i;
     for (i = 0; i < MAX_ARG_CNT; i++) {
@@ -161,8 +157,7 @@ void process_input_file(char* in, char* out){
     int operation_type = -1; /* operation_type type: 0->arithmetics, 1->base change, -1->invalid */
 	int arg_correct = 1; /* correctness of arguments: 1->ok, 0-> not ok */
 	
-	int OPER_CNT = 0;
-    while (fgets(line, MAX_ARG_LEN, in_file)) {
+    while (fgets(line, MAX_ARG_LEN, in_file) || (arg_cnt != 0 && operation_type != -1)) {
         
 		/* removing whitespaces at the end */
         line[strcspn(line, "\r\n")] = '\0';
@@ -201,7 +196,7 @@ void process_input_file(char* in, char* out){
 					strcpy(output, "operacja niedozwolona");
 				}
 				
-				fprintf(out_file, "%s\n\n", output);
+				fprintf(out_file, "%s\r\n\r\n", output);
 				arg_cnt = 0;
 				arg_correct = 1;
 				free(output);
@@ -218,6 +213,8 @@ void process_input_file(char* in, char* out){
 						operation_type = 1;
 					}
 					else{
+						base1 = -1;
+						base2 = -1;
 						operation_type = -1;
 					}
 
@@ -226,12 +223,12 @@ void process_input_file(char* in, char* out){
 						operation_type = 0;
 					}
 					else{
+						operator = 'f';
+						base1 = -1;
 						operation_type = -1;
 					}
 				}
-				OPER_CNT++;
-				printf("oper no.%d\n", OPER_CNT);
-				fprintf(out_file, "%s\n\n", line);
+				fprintf(out_file, "%s\r\n\r\n", line);
 			} else {
 				if(argument_ok(line, base1)){
 					strcpy(args[arg_cnt], line);
@@ -239,42 +236,12 @@ void process_input_file(char* in, char* out){
 				else{
 					arg_correct = 0; /* set incorrect arg flag */
 				}
+				fprintf(out_file, "%s\r\n\r\n", line);
 				arg_cnt++;
-				fprintf(out_file, "%s\n\n", line);
 			}
 		}
 	}
 	
-	if((operation_type == 1 && arg_cnt < 1) || (operation_type == 0 && arg_cnt < 2)){
-		operation_type = -1;
-	}
-
-	if (operation_type == 1){
-		if(arg_correct){
-			output = change_base(arg_cnt, args, base1, base2);
-		}
-		else{
-			output = malloc(MAX_ARG_LEN);
-			strcpy(output, "argumenty niepoprawne");
-		}
-	}
-	else if(operation_type == 0){
-		if(arg_correct){
-			output = calculate(arg_cnt, args, operator, base1);
-		}
-		else{
-			output = malloc(MAX_ARG_LEN);
-			strcpy(output, "argumenty niepoprawne");
-		}
-	}
-	else{
-		output = malloc(MAX_ARG_LEN);
-		strcpy(output, "\n");
-	}
-	
-	fprintf(out_file, "%s\n\n", output);
-	free(output);
-
 	fclose(in_file);
     fclose(out_file);
 

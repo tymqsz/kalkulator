@@ -3,7 +3,7 @@ import sys
 
 sys.set_int_max_str_digits(1000000000)
 
-OPER_CNT = 100       
+OPER_CNT = 10  
 opers = ['*', '+', '/', '^', '%', 'c']
 sizes = [10**x for x in range(1000)]
 
