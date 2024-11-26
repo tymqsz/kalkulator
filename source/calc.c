@@ -1,10 +1,16 @@
 #define DEFAULT_CAPACITY 4
+#define MAX_STRING_LEN 1000000
 #define BASE 1000000000
 
-#include "bignum.h"
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
+
+#include "bignum.h"
+#include "calc.h"
+
+/* all operations happen in-place 
+   meaning result of operation(a, b) will be stored in a */
 
 void add(BigNum_t** a, BigNum_t* b){
 	BigNum_t* A = *a;
@@ -50,7 +56,7 @@ void add(BigNum_t** a, BigNum_t* b){
 }
 
 void multiply(BigNum_t** a, BigNum_t* b){
-	BigNum_t* A = (*a);
+	BigNum_t* A = *a;
 	BigNum_t* B = copy_BigNum(b);
 	
 	BigNum_t* result = int_to_BigNum(0);
@@ -108,9 +114,9 @@ void subtract(BigNum_t** a, BigNum_t* b){
 	BigNum_t* A = *a;
 	BigNum_t* B = copy_BigNum(b);
 	
-	/* check validity of args */
+	/* check validity of args ( a >= b) */
 	if(compare(A, B) == -1){
-		printf("unable to subtract\n");
+		fprintf(stderr, "unable to subtract\n");
 		exit(1);
 	}
 	
@@ -143,6 +149,7 @@ void subtract(BigNum_t** a, BigNum_t* b){
 	*a = result;
 }
 
+/* single digit division used for estimation in real division */
 void divide_by_digit(BigNum_t** a, int b, int* mod){
 	BigNum_t* A = *a;
 	
@@ -190,25 +197,27 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 	BigNum_t* A = copy_BigNum(*a);
 	BigNum_t* B = copy_BigNum(b);
 	
+	/* if A < B -> A/B = 0 modulo = A */
 	if(compare(A, B) == -1){
 		destroy_BigNum(*a);
 		destroy_BigNum(B);
 		
 		*a = int_to_BigNum(0);
-		*modulo = copy_BigNum(A);
-		destroy_BigNum(A);
+		*modulo = A;
+		
 		return;
 	}
 
-
+	/* if B is single-digit */
 	int* mod = malloc(sizeof(int));
-
 	if(b->size == 1){
 		divide_by_digit(&A, b->digits[0], mod);
 		*modulo = int_to_BigNum(*mod);
+		
 		free(mod);
 		destroy_BigNum(B);
 		destroy_BigNum(*a);
+		
 		*a = A;
 		return;
 	}
@@ -221,10 +230,10 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 		scale *= 10;
 	}
 	scale = BASE / scale;
-	
 	BigNum_t* SCALE = int_to_BigNum(scale);
 	multiply(&B, SCALE);
 	multiply(&A, SCALE);
+
 	
 	BigNum_t* one = int_to_BigNum(1);
     BigNum_t* result = init_BigNum(A->size);
@@ -240,9 +249,9 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 		shift_right(part);
 		j++;
 	}
+	
+	/* perform long division */
 	int i = A->size-1-B->size;
-	// write digit in reverse and reverse at the end
-	/* long division */
 	while(i >= 0){
 		/* estimate single digit of result
 		   by considering only first digit of b */
@@ -281,11 +290,12 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 		
 		i--;
 	}
-	/* reverse result */ // TODO: UNNECESSARY
-	if(result->size==0)
-		result->size = 1;
+
+	/* reverse digits of result */
 	i = 0;
 	int temp;
+	if(result->size==0)
+		result->size = 1;
 	while( i < result->size/2){
 		temp = result->digits[i];
 		result->digits[i] = result->digits[result->size-1-i];
@@ -293,23 +303,24 @@ void divide(BigNum_t** a, BigNum_t* b, BigNum_t** modulo) {
 		i++;
 	}
 	
+	/* set modulo as remainder from last division by digit */
 	*modulo = copy_BigNum(part);
 	shift_right(*modulo);
+	divide_by_digit(modulo, scale, mod); /* donwscale modulo */
+	
 	destroy_BigNum(part);
 	destroy_BigNum(one);
 	destroy_BigNum(SCALE);
-	
-	divide_by_digit(modulo, scale, mod);
-	free(mod);
 	destroy_BigNum(*a);
 	destroy_BigNum(A);
 	destroy_BigNum(B);
+	free(mod);
+
 	*a = result;
 }
 
-BigNum_t* fast_exp(BigNum_t** base, BigNum_t* exponent){
-	// TODO: adjust for bigger exponents
-	int n = exponent->digits[0]; 
+/* iterative version of exponentiaion by squaring */
+BigNum_t* fast_exp(BigNum_t** base, int n){
 	BigNum_t* y = int_to_BigNum(1);
 	BigNum_t* x = copy_BigNum(*base);
 	destroy_BigNum(*base);
@@ -331,18 +342,23 @@ BigNum_t* fast_exp(BigNum_t** base, BigNum_t* exponent){
 	return x;
 }
 
+/* interface for exponentiation function */
 void exponentiate(BigNum_t** base, BigNum_t* exponent){
 	BigNum_t* zero = int_to_BigNum(0);
-	
-	if(compare(exponent, zero)==0){
-		BigNum_t* one = int_to_BigNum(1);
+	BigNum_t* one = int_to_BigNum(1);
+	int int_exponent;
+
+	if(compare(exponent, zero)==0 || compare(*base, one)==0){
 		destroy_BigNum(*base);
-		*base = one;
+		*base = copy_BigNum(one);
 	}
-	else
-		*base = fast_exp(base, exponent);
+	else{
+		int_exponent = exponent->digits[0]; // assuming exponent is < 10^9
+		*base = fast_exp(base, int_exponent);
+	}
 	
 	destroy_BigNum(zero);
+	destroy_BigNum(one);
 }
 
 
@@ -351,9 +367,9 @@ int get_value(char c){
 		return c-48;
 	if(65 <= c && c <= 70)
 		return 10+c-65;
-	
-	printf("base error\n");
-	exit(1);
+
+	fprintf(stderr, "conversion error\n");
+	return -1;
 }
 
 char get_char(int n){
@@ -362,67 +378,73 @@ char get_char(int n){
 	if(10 <= n && n <= 15)
 		return 65+n-10;
 	
-	printf("base error\n");
-	exit(1);
+	fprintf(stderr, "conversion error\n");
+	return -1;
 }
 
 
+/* load string containing number of given base to BigNum */
 BigNum_t* convert_to_decimal(char* string, int base){
-
-	BigNum_t* B = int_to_BigNum(base);
-	BigNum_t* result = init_BigNum(DEFAULT_CAPACITY);
-	BigNum_t* current;
-	BigNum_t* current_base = int_to_BigNum(1);
+	BigNum_t* big_base = int_to_BigNum(base);
+	BigNum_t* single_value;
+	BigNum_t* base_to_exp = int_to_BigNum(1);
 	int digit;
-	BigNum_t* D;
+	BigNum_t* DIGIT;
 
+	BigNum_t* result = init_BigNum(DEFAULT_CAPACITY);
 	int len = strlen(string);
 	int i = 0;
 	while(i < len){
-		current = copy_BigNum(current_base);
+		single_value = copy_BigNum(base_to_exp);
 		digit = get_value(string[len-i-1]);
-	
-		D = int_to_BigNum(digit);
-		multiply(&current, D);
-		destroy_BigNum(D);
 
-		add(&result, current);	
-		destroy_BigNum(current);
+		/* calculate single value (digit * base^i) 
+		   and add to result */
+		DIGIT = int_to_BigNum(digit);
+		multiply(&single_value, DIGIT);
+		add(&result, single_value);	
 
-		multiply(&current_base, B);
+		destroy_BigNum(single_value);
+		destroy_BigNum(DIGIT);
+		
+		multiply(&base_to_exp, big_base);
 		i++;
 	}
 	
-	destroy_BigNum(B);
-	destroy_BigNum(current_base);
+	destroy_BigNum(big_base);
+	destroy_BigNum(base_to_exp);
 	return result;
 }
 
+/* converts BigNum to string contating number in given base */
 char* convert_from_decimal(BigNum_t* num, int base){
-	BigNum_t* B = int_to_BigNum(base);
+	BigNum_t* big_base = int_to_BigNum(base);
 	BigNum_t* zero = int_to_BigNum(0);
-	BigNum_t* modulo = init_BigNum(4);
-	BigNum_t* N = copy_BigNum(num);
+	BigNum_t* modulo = init_BigNum(DEFAULT_CAPACITY);
+	BigNum_t* NUM = copy_BigNum(num);
 	int mod;
-	char* result = malloc(1000000);
+	char* result = malloc(MAX_STRING_LEN);
 	
-	//handel unary TODO:
+	/* divide and store modulo in result string */
 	int i = 0;
-	while(compare(N, zero) == 1){
-		divide(&N, B, &modulo);
+	while(compare(NUM, zero) == 1){
+		divide(&NUM, big_base, &modulo);
 
-		// modulo always one digit
-		mod = modulo->digits[0];
+		mod = modulo->digits[0]; /* modulo less than MAX_BASE (16) */
 		result[i] = get_char(mod);
 		i++;
 	}
+
+	/* add '\0' / if result = 0 add '0\0' */
 	if(i == 0){
 		result[0] = '0';
 		result[1] = '\0';
 	}
-	else
+	else{
 		result[i] = '\0';
+	}
 	
+	/* reverse result string */
 	int length = strlen(result);
     for (int i = 0; i < length / 2; i++) {
         char temp = result[i];
@@ -430,25 +452,10 @@ char* convert_from_decimal(BigNum_t* num, int base){
         result[length - i - 1] = temp;
     }
 	
-	destroy_BigNum(B);
+	destroy_BigNum(big_base);
 	destroy_BigNum(zero);
 	destroy_BigNum(modulo);
-	destroy_BigNum(N);
+	destroy_BigNum(NUM);
 
 	return result;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

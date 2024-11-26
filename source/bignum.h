@@ -1,5 +1,5 @@
-#ifndef BN
-#define BN
+#ifndef BIGNUM_H
+#define BIGNUM_H
 
 typedef struct{
 	int* digits;
@@ -24,8 +24,6 @@ void shift_right(BigNum_t*);
 BigNum_t* string_to_BigNum(char*);
 
 BigNum_t* int_to_BigNum(int);
-
-void print_BigNum(BigNum_t*);
 
 void add_leading_zeros(BigNum_t*, int);
 

@@ -1,11 +1,10 @@
-#ifndef FIO
-#define FIO
+#ifndef FILE_IO_H
+#define FILE_IO_H
 
-char* calculate(int arg_cnt, char* args[], char oper, int base);
+char* calculate(int, char**, char, int);
 
-char* change_base(int arg_cnt, char* args[], int base1, int base2);
+char* change_base(int arg_cnt, char**, int, int);
 
-char* strip(char *str);
+void process_input_file(char*, char*);
 
-void process_input_file(char* filename, char*);
 #endif

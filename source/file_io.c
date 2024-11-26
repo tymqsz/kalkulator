@@ -1,22 +1,27 @@
 #include<stdio.h>
-#include "bignum.h"
 #include<stdlib.h>
 #include<string.h>
+
+#include "bignum.h"
 #include "calc.h"
-#include<ctype.h>
+#include "file_io.h"
 
 #define MAX_ARG_LEN 100000
 #define MAX_ARG_CNT 100
+
 
 char* calculate(int arg_cnt, char* args[], char operator, int base){
 	BigNum_t* modulo = init_BigNum(4);
 	BigNum_t* a;
 	BigNum_t* b;
+	
+	/* load first argument */
 	if(base == 10)
 		a = string_to_BigNum(args[0]);
 	else
 		a = convert_to_decimal(args[0], base);
-
+	
+	/* do operations until no more arguments */
 	int i = 1;
 	while(i < arg_cnt){
 		if(base == 10){
@@ -50,6 +55,8 @@ char* calculate(int arg_cnt, char* args[], char operator, int base){
 		i++;
 	}
 	
+	/* convert result to a string,
+	   change base if necessary */
 	char* result;
 	if(base == 10)
 		result = BigNum_to_string(a);
@@ -66,6 +73,7 @@ char* change_base(int arg_cnt, char* args[], int base1, int base2){
 	if(arg_cnt != 1)
 		return "\0";
 	
+	/* convert to decimal, from decimal to target base */
 	BigNum_t* decimal = convert_to_decimal(args[0], base1);
 	char* result = convert_from_decimal(decimal, base2);
 	
@@ -77,12 +85,13 @@ int is_oper_line(char* line){
 	char operator;
 	int base1, base2;
 	
+	/* check if line matches pattern of "operator base"
+								     or "base1 base2" */
     if (sscanf(line, " %c %d", &operator, &base1) == 2) {
 		if(strchr(line, ' '))
 			return 1;
     }
-
-    if (sscanf(line, " %d %d", &base1, &base2) == 2) {
+    else if (sscanf(line, " %d %d", &base1, &base2) == 2) {
         if(strchr(line, ' '))
 			return 1;
     }
@@ -114,13 +123,14 @@ int argument_ok(char* arg, int base){
 		return 0;
 
 	char all_digits[] = "0123456789ABCDEF";
-	char digits[16];
-	strncpy(digits, all_digits, base);
-	digits[base] = '\0';
+	char accepted[16];
+	strncpy(accepted, all_digits, base); /* copy digits from a given base */
+	accepted[base] = '\0';
 	
+	/* check if each char of arg is a correct digit*/
 	char* c = arg;
 	while(*c != '\0'){
-		if(strchr(digits, *c) == NULL)
+		if(strchr(accepted, *c) == NULL)
 			return 0;
 
 		c++;
@@ -133,7 +143,7 @@ int argument_ok(char* arg, int base){
 void process_input_file(char* in, char* out){
     FILE* in_file = fopen(in, "r");
 	if(in_file == NULL){
-			fprintf(stderr, "brak mozliwosci odczytu pliku wejsciowego\n");
+		fprintf(stderr, "brak mozliwosci odczytu pliku wejsciowego\n");
 		return;
 	}
 	FILE* out_file = fopen(out, "w");
@@ -144,7 +154,7 @@ void process_input_file(char* in, char* out){
 
     int arg_cnt = 0;
     int base1 = -1, base2 = -1;
-    char operator = 'f';
+    char operator = 'f'; /* 'f' - meaning faulty */
     char** args = malloc(sizeof(*args) * MAX_ARG_CNT);
     int i;
     for (i = 0; i < MAX_ARG_CNT; i++) {
@@ -205,9 +215,8 @@ void process_input_file(char* in, char* out){
 		else{
 			empty_line_cnt = 0;
 			
-			/* update current operation_type type / load next arg */
 			if (is_oper_line(line)==1) {
-				
+				/* update current operation */	
 				if (sscanf(line, "%d %d", &base1, &base2) == 2) {
 					if(bases_ok(base1, base2) == 1){
 						operation_type = 1;
@@ -230,6 +239,7 @@ void process_input_file(char* in, char* out){
 				}
 				fprintf(out_file, "%s\n\n", line);
 			} else {
+				/* load next argument */
 				if(argument_ok(line, base1)){
 					strcpy(args[arg_cnt], line);
 				}
